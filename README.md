@@ -74,6 +74,8 @@ ofdl config set stash.studio_id 1
 You can add `--help` to any command for more information. For example,
 `ofdl --help`.
 
+You can check database statistics by running `ofdl stats`.
+
 ### Scraping
 
 0. Scrape subscriptions:
