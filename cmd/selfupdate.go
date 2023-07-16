@@ -12,7 +12,7 @@ var selfUpdateCmd = &cobra.Command{
 	Use:   "selfupdate",
 	Short: "Update to the latest version of ofdl",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		v, err := semver.Parse(Version)
+		v, err := semver.Parse(Version[1:])
 		if err != nil {
 			v = semver.MustParse("0.0.0")
 		}
