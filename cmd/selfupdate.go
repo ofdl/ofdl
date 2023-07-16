@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/blang/semver"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
 	"github.com/spf13/cobra"
 )
@@ -21,8 +20,6 @@ var selfUpdateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
-		spew.Dump(latest)
 
 		if latest.Version.Equals(v) {
 			// latest version is the same as current version. It means current binary is up to date.
