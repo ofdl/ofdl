@@ -1,0 +1,10 @@
+# ofdl
+/ofdl.yaml
+/ofdl.sqlite
+
+# goreleaser
+dist/
+
+# security
+id_*
+gpg_*
