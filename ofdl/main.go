@@ -42,7 +42,7 @@ func NewOFDL() (*OFDL, error) {
 		return nil, err
 	}
 	// db = db.Debug()
-	db.AutoMigrate(&model.Subscription{}, &model.Post{}, &model.Media{})
+	db.AutoMigrate(&model.Subscription{}, &model.Post{}, &model.Media{}, &model.Message{}, &model.MessageMedia{})
 
 	of, err := onlyfans.NewOnlyFans()
 	if err != nil {

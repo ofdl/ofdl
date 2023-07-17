@@ -14,6 +14,7 @@ import (
 type OnlyFansAPI interface {
 	GetSubscriptions() ([]Subscription, error)
 	GetMediaPosts(uid int, beforePublishTime *string) (*PaginatedList[MediaPost], error)
+	GetMessages(uid int, id *int) (*PagableList[Message], error)
 }
 
 type OnlyFans struct {

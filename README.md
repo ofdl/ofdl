@@ -86,6 +86,10 @@ You can check database statistics by running `ofdl stats`.
    ```bash
    ofdl scrape media-posts
    ```
+0. Scrape messages:
+   ```bash
+   ofdl scrape messages
+   ```
 0. Or, now that you're familiar with it, just scrape both:
    ```bash
    ofdl scrape
@@ -93,7 +97,15 @@ You can check database statistics by running `ofdl stats`.
 
 ### Downloading
 
-0. Download up to 1,000 undownloaded media:
+0. Download up to 1,000 undownloaded post media:
+   ```bash
+   ofdl download media-posts
+   ```
+0. Download up to 1,000 undownloaded message media:
+   ```bash
+   ofdl download messages
+   ```
+0. Or, now that you're familiar with it, download up to 1,000 of each:
    ```bash
    ofdl download
    ```

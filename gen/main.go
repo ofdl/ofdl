@@ -28,8 +28,8 @@ func main() {
 	)
 
 	// Generate Type Safe API with Dynamic SQL defined on Querier interface for `model.User` and `model.Company`
-	g.ApplyInterface(func(model.DownloadableLookup) {}, model.Media{})
-	g.ApplyInterface(func(model.OrganizableLookup) {}, model.Media{}, model.Subscription{})
+	g.ApplyInterface(func(model.DownloadableLookup) {}, model.Media{}, model.MessageMedia{})
+	g.ApplyInterface(func(model.OrganizableLookup) {}, model.Media{}, model.MessageMedia{}, model.Subscription{})
 	g.ApplyInterface(func(model.EnableableLookup) {}, model.Subscription{})
 
 	// Generate the code

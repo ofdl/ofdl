@@ -2,7 +2,6 @@ package ofdl
 
 import (
 	"path/filepath"
-	"time"
 
 	"github.com/ofdl/ofdl/model"
 	"github.com/siku2/arigo"
@@ -17,11 +16,19 @@ func (o *OFDL) GetMissingMedia(limit int) ([]model.Media, error) {
 	).Missing(limit)
 }
 
-func (o *OFDL) DownloadMedia(m model.Media) (*arigo.GID, error) {
+func (o *OFDL) GetMissingMessageMedia(limit int) ([]model.MessageMedia, error) {
+	q := o.Query.MessageMedia
+	return q.Preload(
+		q.Message,
+		q.Message.Subscription,
+	).Missing(limit)
+}
+
+func (o *OFDL) DownloadMedia(m model.DownloadableMedia) (*arigo.GID, error) {
 	var gid *arigo.GID
 
-	if m.Full != "" {
-		g, err := o.Aria2.AddURI([]string{m.Full}, &arigo.Options{
+	if m.URL() != "" {
+		g, err := o.Aria2.AddURI([]string{m.URL()}, &arigo.Options{
 			Out: m.Filename(),
 			Dir: filepath.Join(viper.GetString("aria2.root"), m.Directory()),
 		})
@@ -32,9 +39,7 @@ func (o *OFDL) DownloadMedia(m model.Media) (*arigo.GID, error) {
 		gid = &g
 	}
 
-	now := time.Now()
-	m.DownloadedAt = &now
-	if err := o.DB.Save(&m).Error; err != nil {
+	if err := m.MarkDownloaded(o.DB); err != nil {
 		return nil, err
 	}
 

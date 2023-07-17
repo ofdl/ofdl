@@ -15,6 +15,7 @@ type OFDLDataAPI interface {
 
 	SaveSubscription(onlyfans.Subscription) error
 	SaveMediaPost(onlyfans.MediaPost) error
+	SaveMessage(uint, onlyfans.Message) error
 }
 
 func NewOFDLData() OFDLDataAPI {
@@ -25,7 +26,7 @@ func NewOFDLData() OFDLDataAPI {
 		panic(err)
 	}
 	// db = db.Debug()
-	db.AutoMigrate(&model.Subscription{}, &model.Post{}, &model.Media{})
+	db.AutoMigrate(&model.Subscription{}, &model.Post{}, &model.Media{}, &model.Message{}, &model.MessageMedia{})
 
 	return &GormOFDLData{
 		DB:    db,

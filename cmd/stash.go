@@ -74,10 +74,22 @@ will probably organize Images into Galleries per-post.
 			return err
 		}
 
-		bar := progressbar.Default(int64(len(ms)), "Organizing Media")
-
+		bar := progressbar.Default(int64(len(ms)), "Organizing Post Media")
 		for _, m := range ms {
-			if err := OFDL.OrganizeMedia(m); err != nil {
+			if err := OFDL.OrganizeMedia(&m); err != nil {
+				return err
+			}
+			bar.Add(1)
+		}
+
+		mms, err := OFDL.GetUnorganizedMessageMedia(1000)
+		if err != nil {
+			return err
+		}
+
+		bar = progressbar.Default(int64(len(ms)), "Organizing Message Media")
+		for _, m := range mms {
+			if err := OFDL.OrganizeMedia(&m); err != nil {
 				return err
 			}
 			bar.Add(1)

@@ -75,9 +75,45 @@ func (o *GormOFDLData) SaveMediaPost(v onlyfans.MediaPost) error {
 		})
 	}
 
-	if err := o.DB.Save(&mp).Error; err != nil {
-		return err
+	return o.DB.Save(&mp).Error
+}
+
+func (o *GormOFDLData) SaveMessage(id uint, v onlyfans.Message) error {
+	var msg model.Message
+	if err := o.DB.First(&msg, uint(v.ID)).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			msg = model.Message{
+				Model: gorm.Model{
+					ID: uint(v.ID),
+				},
+			}
+		} else {
+			return err
+		}
 	}
 
-	return nil
+	msg.SubscriptionID = id
+	msg.Text = v.Text
+	msg.PostedAt = v.CreatedAt
+
+	for _, m := range v.Media {
+		if !m.CanView {
+			continue
+		}
+
+		mm := model.MessageMedia{
+			Model: gorm.Model{
+				ID: uint(m.ID),
+			},
+			Type: m.Type,
+		}
+
+		if m.Src != nil {
+			mm.Src = *m.Src
+		}
+
+		msg.Medias = append(msg.Medias, mm)
+	}
+
+	return o.DB.Save(&msg).Error
 }

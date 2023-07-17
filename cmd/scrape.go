@@ -12,8 +12,9 @@ var scrapeCmd = &cobra.Command{
 	Short: "Scrape OnlyFans API",
 	Long: `Scrape OnlyFans API
 
-This command will scrape the OnlyFans API for subscriptions and media posts. See
-ofdl scrape subs --help and ofdl scrape media-posts --help for more information.
+This command will scrape the OnlyFans API for subscriptions, media posts, and
+messages. See ofdl scrape subs --help, ofdl scrape media-posts --help, and
+ofdl scrape msg --help for more information.
 `,
 	PersistentPreRunE: UseOFDL,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -22,6 +23,10 @@ ofdl scrape subs --help and ofdl scrape media-posts --help for more information.
 		}
 
 		if err := scrapeMediaPostsCmd.RunE(cmd, args); err != nil {
+			return err
+		}
+
+		if err := scrapeMessagesCmd.RunE(cmd, args); err != nil {
 			return err
 		}
 
@@ -65,7 +70,7 @@ This command will scrape the OnlyFans API for media posts and save them to the
 database. This command will also update the head marker for each subscription
 that is scraped. This allows for incremental scraping of media posts.
 `,
-	Aliases: []string{"media", "mp", "m"},
+	Aliases: []string{"media", "mp"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		subs, err := OFDL.Data().GetEnabledSubscriptions()
 		if err != nil {
@@ -131,8 +136,61 @@ that is scraped. This allows for incremental scraping of media posts.
 	},
 }
 
+var scrapeMessagesCmd = &cobra.Command{
+	Use:   "messages",
+	Short: "Scrape OnlyFans Messages",
+	Long: `Scrape OnlyFans Messages
+
+This command will scrape the OnlyFans API for messages and save them to the
+database.
+`,
+	Aliases: []string{"msg"},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		subs, err := OFDL.Data().GetEnabledSubscriptions()
+		if err != nil {
+			return err
+		}
+
+		for _, sub := range subs {
+			hasMore := true
+			var nextId *int
+
+			bar := progressbar.Default(-1, fmt.Sprintf("%s", sub.Name))
+
+			for hasMore {
+				// Get a page
+				page, err := OFDL.OnlyFans.GetMessages(int(sub.ID), nextId)
+				if err != nil {
+					return err
+				}
+
+				// Handle Pagination
+				hasMore = page.HasMore
+
+				// Save Messages
+				for _, m := range page.List {
+					if err := OFDL.Data().SaveMessage(sub.ID, m); err != nil {
+						return err
+					}
+					bar.Add(1)
+
+					nextId = &m.ID
+				}
+			}
+
+			// Consider a head marker or something?
+
+			bar.Close()
+
+		}
+
+		return nil
+	},
+}
+
 func init() {
 	scrapeCmd.AddCommand(scrapeSubsCmd)
 	scrapeCmd.AddCommand(scrapeMediaPostsCmd)
+	scrapeCmd.AddCommand(scrapeMessagesCmd)
 	CLI.AddCommand(scrapeCmd)
 }

@@ -76,20 +76,23 @@ func (o *OFDL) GetUnorganizedMedia(limit int) ([]model.Media, error) {
 	).Unorganized(limit)
 }
 
-func (o *OFDL) OrganizeMedia(m model.Media) error {
-	if m.Full == "" {
-		now := time.Now()
-		m.OrganizedAt = &now
-		if err := o.DB.Save(&m).Error; err != nil {
-			return err
-		}
-		return nil
+func (o *OFDL) GetUnorganizedMessageMedia(limit int) ([]model.MessageMedia, error) {
+	q := o.Query.MessageMedia
+	return q.Preload(
+		q.Message,
+		q.Message.Subscription,
+	).Unorganized(limit)
+}
+
+func (o *OFDL) OrganizeMedia(m model.OrganizableMedia) error {
+	if m.URL() == "" {
+		return m.MarkOrganized(o.DB)
 	}
 
 	var sm StashLookup
 	var sr interface{}
 
-	switch m.Type {
+	switch m.GetType() {
 	case "photo":
 		sm = &ImageLookup{}
 		sr = &ImageUpdate{}
@@ -113,26 +116,17 @@ func (o *OFDL) OrganizeMedia(m model.Media) error {
 	// set the text, date, and model?
 	vars := map[string]interface{}{
 		"id":          sm.Medias()[0].ID,
-		"title":       graphql.String(m.Post.Text),
-		"performerId": graphql.ID(m.Post.Subscription.StashID),
+		"title":       graphql.String(m.GetTitle()),
+		"performerId": graphql.ID(m.GetPerformerID()),
 		"studioId":    graphql.ID(viper.GetString("stash.studio_id")),
 	}
-	if d, err := time.Parse(time.RFC3339, m.Post.PostedAt); err == nil {
+	if d, err := m.GetDate(); err == nil {
 		vars["date"] = graphql.String(d.Format("2006-01-02"))
-	} else {
-		panic(err)
 	}
 
 	if err := o.Stash.Mutate(o.ctx, sr, vars); err != nil {
 		return err
 	}
 
-	now := time.Now()
-	m.StashID = sm.Medias()[0].ID
-	m.OrganizedAt = &now
-	if err := o.DB.Save(&m).Error; err != nil {
-		return err
-	}
-
-	return nil
+	return m.Organize(o.DB, sm.Medias()[0].ID)
 }
