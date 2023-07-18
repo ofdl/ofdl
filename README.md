@@ -12,20 +12,20 @@ It facilitates authentication, stores metadata in `ofdl.sqlite`, sends downloads
    ```bash
    ofdl config init
    ```
-0. Navigate to `chrome://version/` in your favorite flavor of Chromium. Try out [Arc](https://arc.net/gift/23df283b)!
+0. Navigate to `chrome://version/` in your favorite flavor of Chromium.
 0. Copy the "Executable Path". Paste it in `chromium.exec`:
    ```bash
-   ofdl config set chromium.exec "/Applications/Arc.app/Contents/MacOS/Arc"
+   ofdl config set chromium.exec "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
    ```
-0. Copy the "Profile Path". Paste it in `chromium.profile`, but remove the last path segment:
+0. Copy the "Profile Path". Paste it in `chromium.profile`:
    ```bash
-   ofdl config set chromium.profile "~/Library/Application Support/Arc/User Data/"
+   ofdl config set chromium.profile "$HOME/Library/Application Support/BraveSoftware/Brave-Browser/Default"
    ```
 0. Exit all instances of Chromium, then run the auth helper:
    ```bash
    ofdl auth
    ```
-   Log in, then return to your terminal and press enter. This will extract the session details and appropriately update your `ofdl.yaml` config file. You can now re-open Chromium like normal.
+   Log in, then the browser window will close. This will extract the session details and appropriately update your `ofdl.yaml` config file. You can now re-open Chromium like normal.
 
 ### Downloading
 

@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/chromedp/cdproto/network"
@@ -23,12 +21,8 @@ var authCmd = &cobra.Command{
 
 Once you've configured Chromium, quit your browser and run this command. It will
 open a new browser window, and prompt you to login to OnlyFans. Once you've
-logged in, press enter to continue. The command will then populate your
+logged in, the window will close. The command will then populate your
 configuration with the necessary values.
-
-It was originally developed against Arc, a newer flavor of Chromium which
-handles Chrome Profiles differently. If the profile is configured incorrectly,
-the new Chromium window will not have your extensions or sessions present.
 
 If you can't get the auth helper to work properly, you can always manually
 configure authentication. Follow the instructions at the link below to obtain
@@ -47,22 +41,16 @@ https://github.com/DIGITALCRIMINALS/UltimaScraper#running-the-app-locally
 		ctx, cancel := chromedp.NewContext(allocatorContext)
 		defer cancel()
 
-		if err := chromedp.Run(ctx,
-			chromedp.Navigate(`https://onlyfans.com/`),
-		); err != nil {
-			return err
-		}
-
-		fmt.Print("Login, then press enter to continue...")
-		bufio.NewReader(os.Stdin).ReadBytes('\n')
+		fmt.Println("Look for a new browser window and login to the website!")
 
 		var userAgent string
 		var xBc string
 		return chromedp.Run(ctx,
 			chromedp.Navigate(`https://onlyfans.com/`),
+			chromedp.WaitVisible(`//a[@href="/posts/create"]`),
+
 			chromedp.Evaluate(`navigator.userAgent`, &userAgent),
 			chromedp.Evaluate(`localStorage.getItem('bcTokenSha')`, &xBc),
-
 			chromedp.ActionFunc(func(ctx context.Context) error {
 				viper.Set("auth.user-agent", userAgent)
 				viper.Set("auth.x-bc", xBc)
