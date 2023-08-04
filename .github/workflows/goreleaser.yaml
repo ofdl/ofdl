@@ -35,11 +35,10 @@ jobs:
           distribution: goreleaser
           version: latest
           args: release --snapshot --clean
-          workdir: work
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v3
         if: ${{ github.ref_type == 'branch' }}
         with:
           name: ofdl
-          path: work/dist/*
+          path: dist/*
