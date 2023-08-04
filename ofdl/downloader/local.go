@@ -11,14 +11,14 @@ import (
 )
 
 type LocalDownloader struct {
-	root string
 	db   *gorm.DB
+	root string
 }
 
 func NewLocalDownloader(db *gorm.DB, root string) (Downloader, error) {
 	return &LocalDownloader{
-		root: root,
 		db:   db,
+		root: root,
 	}, nil
 }
 

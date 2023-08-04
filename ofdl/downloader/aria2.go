@@ -21,8 +21,9 @@ func NewAria2Downloader(db *gorm.DB, address, secret, root string) (*Aria2Downlo
 	}
 
 	return &Aria2Downloader{
-		db:  db,
-		rpc: &ag,
+		db:   db,
+		rpc:  &ag,
+		root: root,
 	}, nil
 }
 
