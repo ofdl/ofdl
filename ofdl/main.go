@@ -39,7 +39,7 @@ func NewOFDL() (*OFDL, error) {
 		return nil, err
 	}
 
-	dl, err := getDownloader()
+	dl, err := getDownloader(db)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +68,13 @@ func openDatabase() (*gorm.DB, error) {
 	return db, nil
 }
 
-func getDownloader() (dl downloader.Downloader, err error) {
+func getDownloader(db *gorm.DB) (dl downloader.Downloader, err error) {
 	switch viper.GetString("downloads.downloader") {
 	case "local":
-		dl, err = downloader.NewLocalDownloader(viper.GetString("downloads.local.root"))
+		dl, err = downloader.NewLocalDownloader(db, viper.GetString("downloads.local.root"))
 	case "aria2":
 		dl, err = downloader.NewAria2Downloader(
+			db,
 			viper.GetString("downloads.aria2.address"),
 			viper.GetString("downloads.aria2.secret"),
 			viper.GetString("downloads.aria2.root"),

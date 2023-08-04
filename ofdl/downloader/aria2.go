@@ -5,20 +5,23 @@ import (
 
 	"github.com/ofdl/ofdl/model"
 	"github.com/siku2/arigo"
+	"gorm.io/gorm"
 )
 
 type Aria2Downloader struct {
+	db   *gorm.DB
 	rpc  *arigo.Client
 	root string
 }
 
-func NewAria2Downloader(address, secret, root string) (*Aria2Downloader, error) {
+func NewAria2Downloader(db *gorm.DB, address, secret, root string) (*Aria2Downloader, error) {
 	ag, err := arigo.Dial(address, secret)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Aria2Downloader{
+		db:  db,
 		rpc: &ag,
 	}, nil
 }
@@ -35,11 +38,6 @@ func (d *Aria2Downloader) DownloadMany(mm []model.DownloadableMedia) <-chan erro
 			sem <- struct{}{}
 			go func(m model.DownloadableMedia) {
 				defer func() { <-sem }()
-
-				if m.URL() == "" {
-					d1 <- nil
-					return
-				}
 
 				p, done := d.DownloadOne(m)
 				for {
@@ -69,12 +67,22 @@ func (d *Aria2Downloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 	go func() {
 		defer close(progress)
 
+		if m.URL() == "" {
+			done <- m.MarkDownloaded(d.db)
+			return
+		}
+
 		_, err := d.rpc.AddURI([]string{m.URL()}, &arigo.Options{
 			Out: m.Filename(),
 			Dir: filepath.Join(d.root, m.Directory()),
 		})
+		if err != nil {
 
-		done <- err
+			done <- err
+			return
+		}
+
+		done <- m.MarkDownloaded(d.db)
 	}()
 
 	return progress, done

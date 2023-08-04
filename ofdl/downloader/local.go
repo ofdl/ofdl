@@ -7,15 +7,18 @@ import (
 	"path/filepath"
 
 	"github.com/ofdl/ofdl/model"
+	"gorm.io/gorm"
 )
 
 type LocalDownloader struct {
 	root string
+	db   *gorm.DB
 }
 
-func NewLocalDownloader(root string) (Downloader, error) {
+func NewLocalDownloader(db *gorm.DB, root string) (Downloader, error) {
 	return &LocalDownloader{
 		root: root,
+		db:   db,
 	}, nil
 }
 
@@ -29,11 +32,6 @@ func (d *LocalDownloader) DownloadMany(mm []model.DownloadableMedia) <-chan erro
 			sem <- struct{}{}
 			go func(m model.DownloadableMedia) {
 				defer func() { <-sem }()
-
-				if m.URL() == "" {
-					d1 <- nil
-					return
-				}
 
 				p, done := d.DownloadOne(m)
 				for {
@@ -63,6 +61,11 @@ func (d *LocalDownloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 	go func() {
 		defer close(progress)
 
+		if m.URL() == "" {
+			done <- m.MarkDownloaded(d.db)
+			return
+		}
+
 		resp, err := http.Get(m.URL())
 		if err != nil {
 			done <- err
@@ -85,7 +88,12 @@ func (d *LocalDownloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 		defer out.Close()
 
 		_, err = io.Copy(out, progressReader)
-		done <- err
+		if err != nil {
+			done <- err
+			return
+		}
+
+		done <- m.MarkDownloaded(d.db)
 	}()
 
 	return progress, done
