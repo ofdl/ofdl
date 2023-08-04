@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/glebarez/sqlite"
 	"github.com/ofdl/ofdl/model"
 	"github.com/ofdl/ofdl/model/query"
 	"github.com/ofdl/ofdl/ofdl/data"
@@ -11,7 +12,6 @@ import (
 	"github.com/ofdl/ofdl/ofdl/onlyfans"
 	"github.com/shurcooL/graphql"
 	"github.com/spf13/viper"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
