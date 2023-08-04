@@ -302,13 +302,13 @@ type IMediaDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
-	Missing(limit int) (result []model.Media, err error)
+	Missing(limit int) (result []*model.Media, err error)
 	Unorganized(limit int) (result []model.Media, err error)
 	FindByStashID(stashID string) (result model.Media, err error)
 }
 
 // select * from @@table WHERE downloaded_at IS NULL LIMIT @limit
-func (m mediaDo) Missing(limit int) (result []model.Media, err error) {
+func (m mediaDo) Missing(limit int) (result []*model.Media, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder

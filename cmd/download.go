@@ -39,14 +39,15 @@ var downloadPostsCmd = &cobra.Command{
 			return err
 		}
 
-		bar := progressbar.Default(int64(len(missing)), "Queueing post downloads")
-		for _, m := range missing {
-			_, err := OFDL.DownloadMedia(&m)
+		bar := progressbar.Default(int64(len(missing)), "Downloading media")
+		progress := OFDL.Downloader.DownloadMany(missing)
+		for err := range progress {
 			if err != nil {
 				return err
 			}
 			bar.Add(1)
 		}
+
 		return nil
 	},
 }
@@ -61,14 +62,15 @@ var downloadMessagesCmd = &cobra.Command{
 			return err
 		}
 
-		bar := progressbar.Default(int64(len(missing)), "Queueing message downloads")
-		for _, m := range missing {
-			_, err := OFDL.DownloadMedia(&m)
+		bar := progressbar.Default(int64(len(missing)), "Downloading message media")
+		progress := OFDL.Downloader.DownloadMany(missing)
+		for err := range progress {
 			if err != nil {
 				return err
 			}
 			bar.Add(1)
 		}
+
 		return nil
 	},
 }
@@ -78,10 +80,16 @@ func init() {
 	downloadCmd.AddCommand(downloadMessagesCmd)
 	CLI.AddCommand(downloadCmd)
 
-	downloadCmd.Flags().String("address", "", "Aria2 WebSocket RPC Address")
-	viper.BindPFlag("aria2.address", downloadCmd.Flags().Lookup("address"))
-	downloadCmd.Flags().String("secret", "", "Aria2 RPC Secret")
-	viper.BindPFlag("aria2.secret", downloadCmd.Flags().Lookup("secret"))
-	downloadCmd.Flags().String("root", "", "Root directory for downloads")
-	viper.BindPFlag("aria2.root", downloadCmd.Flags().Lookup("root"))
+	downloadCmd.PersistentFlags().String("downloader", "", "Download method (local, aria2)")
+	viper.BindPFlag("downloads.downloader", downloadCmd.PersistentFlags().Lookup("downloader"))
+
+	downloadCmd.PersistentFlags().String("local-root", "", "Root directory for Local downloads")
+	viper.BindPFlag("downloads.local.root", downloadCmd.PersistentFlags().Lookup("local-root"))
+
+	downloadCmd.PersistentFlags().String("aria2-address", "", "Aria2 WebSocket RPC Address")
+	viper.BindPFlag("downloads.aria2.address", downloadCmd.PersistentFlags().Lookup("aria2-address"))
+	downloadCmd.PersistentFlags().String("aria2-secret", "", "Aria2 RPC Secret")
+	viper.BindPFlag("downloads.aria2.secret", downloadCmd.PersistentFlags().Lookup("aria2-secret"))
+	downloadCmd.PersistentFlags().String("aria2-root", "", "Root directory for Aria2 downloads")
+	viper.BindPFlag("downloads.aria2.root", downloadCmd.PersistentFlags().Lookup("aria2-root"))
 }

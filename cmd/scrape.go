@@ -50,7 +50,7 @@ database.
 		}
 
 		for _, sub := range subs {
-			if err := OFDL.Data().SaveSubscription(sub); err != nil {
+			if err := OFDL.Data.SaveSubscription(sub); err != nil {
 				return err
 			}
 		}
@@ -72,7 +72,7 @@ that is scraped. This allows for incremental scraping of media posts.
 `,
 	Aliases: []string{"media", "mp"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		subs, err := OFDL.Data().GetEnabledSubscriptions()
+		subs, err := OFDL.Data.GetEnabledSubscriptions()
 		if err != nil {
 			return err
 		}
@@ -105,7 +105,7 @@ that is scraped. This allows for incremental scraping of media posts.
 
 				// Save Media Posts
 				for _, m := range page.List {
-					if err := OFDL.Data().SaveMediaPost(m); err != nil {
+					if err := OFDL.Data.SaveMediaPost(m); err != nil {
 						return err
 					}
 					bar.Add(len(m.Media))
@@ -146,7 +146,7 @@ database.
 `,
 	Aliases: []string{"msg"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		subs, err := OFDL.Data().GetEnabledSubscriptions()
+		subs, err := OFDL.Data.GetEnabledSubscriptions()
 		if err != nil {
 			return err
 		}
@@ -169,7 +169,7 @@ database.
 
 				// Save Messages
 				for _, m := range page.List {
-					if err := OFDL.Data().SaveMessage(sub.ID, m); err != nil {
+					if err := OFDL.Data.SaveMessage(sub.ID, m); err != nil {
 						return err
 					}
 					bar.Add(1)

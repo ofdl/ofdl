@@ -30,7 +30,7 @@ type OrganizableMedia interface {
 
 type DownloadableLookup interface {
 	// select * from @@table WHERE downloaded_at IS NULL LIMIT @limit
-	Missing(limit int) ([]gen.T, error)
+	Missing(limit int) ([]*gen.T, error)
 }
 
 type OrganizableLookup interface {

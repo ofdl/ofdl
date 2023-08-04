@@ -8,6 +8,7 @@ require (
 	github.com/chromedp/chromedp v0.9.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dghubble/sling v1.4.1
+	github.com/gosuri/uiprogress v0.0.1
 	github.com/rhysd/go-github-selfupdate v1.2.3
 	github.com/samber/lo v1.38.1
 	github.com/schollz/progressbar/v3 v3.13.1
@@ -34,6 +35,7 @@ require (
 	github.com/google/go-github/v30 v30.1.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -42,6 +44,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/microsoft/go-mssqldb v0.21.0 // indirect

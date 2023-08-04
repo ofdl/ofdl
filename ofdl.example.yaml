@@ -1,7 +1,11 @@
-aria2:
-    address: ws://localhost:6800/jsonrpc
-    root: /downloads
-    secret: secret
+downloads:
+    downloader: local
+    local:
+        root: ./downloads
+    aria2:
+        address: ws://localhost:6800/jsonrpc
+        root: /downloads
+        secret: secret
 chromium:
     exec: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
     profile: ~/Library/Application Support/Google/Chrome/Default

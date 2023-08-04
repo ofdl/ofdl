@@ -1,6 +1,7 @@
 # ofdl
 /ofdl.yaml
 /ofdl.sqlite
+/downloads
 
 # goreleaser
 dist/

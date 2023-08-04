@@ -33,7 +33,10 @@ type Media struct {
 	OrganizedAt  *time.Time
 }
 
-var _ OrganizableMedia = &Media{}
+var (
+	_ OrganizableMedia  = &Media{}
+	_ DownloadableMedia = &Media{}
+)
 
 // GetDate implements OrganizableMedia.
 func (m *Media) GetDate() (time.Time, error) {
