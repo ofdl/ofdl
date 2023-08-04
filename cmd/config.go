@@ -40,14 +40,22 @@ $PWD/ofdl.yaml. The following is a comprehensive example configuration file:
   	user-id:
   	x-bc:
   
-  # Aria2 Config
-  aria2:
-  	# Address of Aria2 WebSocket RPC server
-  	addr: ws://localhost:6800/jsonrpc
-  	# Aria2 RPC secret token
-  	secret: secret
-  	# Root directory for Aria downloads
-  	root: /ofdl
+  # Downloader Config
+  downloads:
+    # Desired Downloader
+    downloader: local
+    # Local Downloader Config
+    local:
+      # Root directory for local downloads
+      root: ./downloads
+    # Aria2 Downloader Config
+    aria2:
+      # Address of Aria2 WebSocket RPC server
+      address: ws://localhost:6800/jsonrpc
+      # Aria2 RPC secret token
+      secret: secret
+      # Root directory for Aria downloads
+      root: /ofdl
 `,
 }
 

@@ -12,8 +12,9 @@ var downloadCmd = &cobra.Command{
 	Short:   "Download media",
 	Long: `Download media
 
-OFDL uses Aria2 to manage downloads. After you've configured Aria2, this command
-will queue up to 1,000 undownloaded media.
+OFDL uses your configured Downloader (Local or Aria2) to manage downloads.
+After you've configured your downloader, this command will queue up to 1,000
+ndownloaded media.
 `,
 	PersistentPreRunE: UseOFDL,
 	RunE: func(cmd *cobra.Command, args []string) error {

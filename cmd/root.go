@@ -24,8 +24,8 @@ var CLI = &cobra.Command{
 	Long: `OnlyFans Downloader
 
 ofdl is a command-line tool for downloading media from OnlyFans. It uses the
-OnlyFans API to scrape subscriptions and media posts, and Aria2 to manage
-downloads.
+OnlyFans API to scrape subscriptions and media posts, and optionally Aria2 to
+anage downloads.
 
 ofdl is not affiliated with OnlyFans in any way. It is a third-party tool that
 uses the OnlyFans API to download media. It is not endorsed by OnlyFans, and
@@ -36,9 +36,10 @@ A typical ofdl setup looks like this:
   ofdl config init
   ofdl config set chromium.exec /path/to/chromium
   ofdl config set chromium.profile /path/to/chromium/profile
-  ofdl config set aria2.address ws://localhost:6800/jsonrpc
-  ofdl config set aria2.secret my-secret
-  ofdl config set aria2.root /path/to/downloads
+  ofdl config set downloads.downloader aria2
+  ofdl config set downloads.aria2.address ws://localhost:6800/jsonrpc
+  ofdl config set downloads.aria2.secret my-secret
+  ofdl config set downloads.aria2.root /path/to/downloads
 
 A typical ofdl workflow looks like this:
 

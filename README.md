@@ -2,7 +2,9 @@
 
 `ofdl` is a CLI application written in Golang.
 
-It facilitates authentication, stores metadata in `ofdl.sqlite`, sends downloads to [Aria2](https://aria2.github.io/), and organizes media in [Stash](https://stashapp.cc/).
+It facilitates authentication, stores metadata in `ofdl.sqlite`, sends downloads
+to [Aria2](https://aria2.github.io/) (or downloads directly to disk), and
+organizes media in [Stash](https://stashapp.cc/).
 
 ## Setup
 
@@ -12,6 +14,9 @@ It facilitates authentication, stores metadata in `ofdl.sqlite`, sends downloads
    ```bash
    ofdl config init
    ```
+   > Any subsequent `odfl config` commands in this documentation can be omitted
+   > in favor of editing the `ofdl.yaml` file directly, if you're comfortable
+   > editing a YAML file.
 0. Navigate to `chrome://version/` in your favorite flavor of Chromium.
 0. Copy the "Executable Path". Paste it in `chromium.exec`:
    ```bash
@@ -25,11 +30,25 @@ It facilitates authentication, stores metadata in `ofdl.sqlite`, sends downloads
    ```bash
    ofdl auth
    ```
-   Log in, then the browser window will close. This will extract the session details and appropriately update your `ofdl.yaml` config file. You can now re-open Chromium like normal.
+   Log in, then the browser window will close. This will extract the session
+   details and appropriately update your `ofdl.yaml` config file. You can now
+   re-open Chromium like normal.
 
 ### Downloading
 
-OFDL delegates downloads to Aria2. To run Aria2 in Docker, try this:
+#### Local
+
+OFDL can save downloads directly to disk. You can customize the path where media
+is saved to:
+
+```bash
+ofdl config set downloads.downloader local
+ofdl config set downloads.local.root $HOME/Downloads
+```
+
+#### Aria2
+
+OFDL can delegate downloads to Aria2. To run Aria2 in Docker, try this:
 
 ```yaml
 mkdir downloads
@@ -50,12 +69,14 @@ docker run -d \
    p3terx/aria2-pro
 ```
 
-The default config will work out of the box with this container, however you can configure your own aria2 server:
+The default config will work out of the box with this container, however you
+can configure your own aria2 server:
 
 ```bash
-ofdl config set aria2.address ws://aria2:6800/jsonrpc
-ofdl config set aria2.secret my-super-notasecret
-ofdl config set aria2.root /mnt/data
+ofdl config set downloads.downloader aria2
+ofdl config set downloads.aria2.address ws://aria2:6800/jsonrpc
+ofdl config set downloads.aria2.secret my-super-notasecret
+ofdl config set downloads.aria2.root /mnt/data
 ```
 
 ### Organizing
