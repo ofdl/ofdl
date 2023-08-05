@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+func NewStash() *graphql.Client {
+	return graphql.NewClient(viper.GetString("stash.address"), nil)
+}
+
 func (o *OFDL) GetUnorganizedSubscriptions(limit int) ([]model.Subscription, error) {
 	return o.Query.Subscription.Unorganized(limit)
 }

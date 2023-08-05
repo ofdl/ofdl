@@ -9,13 +9,12 @@ import (
 var OFDL *ofdl.OFDL
 
 func UseOFDL(cmd *cobra.Command, args []string) error {
-	o, err := ofdl.NewOFDL()
+	c, err := ofdl.NewContainer(cmd.Context())
 	if err != nil {
 		return err
 	}
 
-	OFDL = o
-	return nil
+	return c.Resolve(&OFDL)
 }
 
 var CLI = &cobra.Command{

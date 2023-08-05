@@ -7,10 +7,10 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20230716001748-3ed7c525ec8b
 	github.com/chromedp/chromedp v0.9.1
 	github.com/davecgh/go-spew v1.1.1
+	github.com/defval/di v1.12.0
 	github.com/dghubble/sling v1.4.1
 	github.com/glebarez/sqlite v1.9.0
 	github.com/goreleaser/goreleaser v1.19.2
-	github.com/gosuri/uiprogress v0.0.1
 	github.com/rhysd/go-github-selfupdate v1.2.3
 	github.com/samber/lo v1.38.1
 	github.com/schollz/progressbar/v3 v3.13.1
@@ -18,6 +18,7 @@ require (
 	github.com/siku2/arigo v0.2.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
+	gorm.io/driver/sqlite v1.5.2
 	gorm.io/gen v0.3.23
 	gorm.io/gorm v1.25.2
 	gorm.io/plugin/dbresolver v1.4.1
@@ -159,7 +160,6 @@ require (
 	github.com/goreleaser/fileglob v1.3.0 // indirect
 	github.com/goreleaser/nfpm/v2 v2.31.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -188,6 +188,7 @@ require (
 	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/mattn/go-mastodon v0.0.6 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -267,7 +268,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/datatypes v1.2.0 // indirect
 	gorm.io/driver/mysql v1.5.1 // indirect
-	gorm.io/driver/sqlite v1.5.2 // indirect
 	gorm.io/hints v1.1.2 // indirect
 	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect

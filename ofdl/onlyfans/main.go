@@ -25,7 +25,7 @@ type OnlyFans struct {
 
 var _ OnlyFansAPI = &OnlyFans{}
 
-func NewOnlyFans() (*OnlyFans, error) {
+func NewOnlyFans() (OnlyFansAPI, error) {
 	dr, err := NewDynamicRules()
 	if err != nil {
 		return nil, err
