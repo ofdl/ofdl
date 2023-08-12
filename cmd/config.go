@@ -44,6 +44,8 @@ $PWD/ofdl.yaml. The following is a comprehensive example configuration file:
   downloads:
     # Desired Downloader
     downloader: local
+    # Download Batch Size
+    batch-size: 1000
     # Local Downloader Config
     local:
       # Root directory for local downloads
