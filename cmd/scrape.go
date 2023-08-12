@@ -44,18 +44,28 @@ database.
 `,
 	Aliases: []string{"subs", "s"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		subs, err := OFDL.OnlyFans.GetSubscriptions()
+		f, err := OFDL.OnlyFans.Following()
 		if err != nil {
 			return err
 		}
 
-		for _, sub := range subs {
-			if err := OFDL.Data.SaveSubscription(sub); err != nil {
+		bar := progressbar.Default(int64(f.UsersCount), "Scraping subscriptions")
+		defer bar.Close()
+
+		l := 50
+		for o := 0; o < f.UsersCount; o += l {
+			subs, err := OFDL.OnlyFans.GetSubscriptions(l, o)
+			if err != nil {
 				return err
 			}
-		}
 
-		fmt.Printf("Saved %d Subscriptions\n", len(subs))
+			for _, sub := range subs {
+				if err := OFDL.Data.SaveSubscription(sub); err != nil {
+					return err
+				}
+				bar.Add(1)
+			}
+		}
 
 		return nil
 	},

@@ -1,12 +1,12 @@
 package onlyfans
 
-func (o *OnlyFans) GetSubscriptions() ([]Subscription, error) {
+func (o *OnlyFans) GetSubscriptions(limit, offset int) ([]Subscription, error) {
 	out := []Subscription{}
 	outErr := map[string]interface{}{}
 	r, err := o.New().Get("subscriptions/subscribes").
 		QueryStruct(GetSubscriptionsOptions{
-			Offset: 0,
-			Limit:  50,
+			Limit:  limit,
+			Offset: offset,
 			Type:   "active",
 			Sort:   "desc",
 			Field:  "expire_date",
