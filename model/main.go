@@ -43,5 +43,11 @@ type OrganizableLookup interface {
 
 type EnableableLookup interface {
 	// select * from @@table WHERE enabled = true
-	GetEnabled() ([]gen.T, error)
+	GetEnabled() ([]*gen.T, error)
+
+	// update @@table set enabled = true where id = @id
+	Enable(id uint) error
+
+	// update @@table set enabled = false where id = @id
+	Disable(id uint) error
 }

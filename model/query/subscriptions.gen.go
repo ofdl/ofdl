@@ -312,7 +312,9 @@ type ISubscriptionDo interface {
 
 	Unorganized(limit int) (result []model.Subscription, err error)
 	FindByStashID(stashID string) (result model.Subscription, err error)
-	GetEnabled() (result []model.Subscription, err error)
+	GetEnabled() (result []*model.Subscription, err error)
+	Enable(id uint) (err error)
+	Disable(id uint) (err error)
 }
 
 // select * from @@table WHERE organized_at IS NULL LIMIT @limit
@@ -343,12 +345,42 @@ func (s subscriptionDo) FindByStashID(stashID string) (result model.Subscription
 }
 
 // select * from @@table WHERE enabled = true
-func (s subscriptionDo) GetEnabled() (result []model.Subscription, err error) {
+func (s subscriptionDo) GetEnabled() (result []*model.Subscription, err error) {
 	var generateSQL strings.Builder
 	generateSQL.WriteString("select * from subscriptions WHERE enabled = true ")
 
 	var executeSQL *gorm.DB
 	executeSQL = s.UnderlyingDB().Raw(generateSQL.String()).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// update @@table set enabled = true where id = @id
+func (s subscriptionDo) Enable(id uint) (err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, id)
+	generateSQL.WriteString("update subscriptions set enabled = true where id = ? ")
+
+	var executeSQL *gorm.DB
+	executeSQL = s.UnderlyingDB().Exec(generateSQL.String(), params...) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// update @@table set enabled = false where id = @id
+func (s subscriptionDo) Disable(id uint) (err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, id)
+	generateSQL.WriteString("update subscriptions set enabled = false where id = ? ")
+
+	var executeSQL *gorm.DB
+	executeSQL = s.UnderlyingDB().Exec(generateSQL.String(), params...) // ignore_security_alert
 	err = executeSQL.Error
 
 	return

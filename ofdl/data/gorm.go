@@ -16,7 +16,11 @@ type GormOFDLData struct {
 
 var _ OFDLDataAPI = &GormOFDLData{}
 
-func (o *GormOFDLData) GetEnabledSubscriptions() ([]model.Subscription, error) {
+func (o *GormOFDLData) GetSubscriptions() ([]*model.Subscription, error) {
+	return o.Query.Subscription.Find()
+}
+
+func (o *GormOFDLData) GetEnabledSubscriptions() ([]*model.Subscription, error) {
 	return o.Query.Subscription.GetEnabled()
 }
 

@@ -1,20 +1,28 @@
 package cmd
 
 import (
+	"context"
+
+	"github.com/defval/di"
 	"github.com/ofdl/ofdl/ofdl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var OFDL *ofdl.OFDL
+var (
+	App  *di.Container
+	OFDL *ofdl.OFDL
+)
+
+func Execute(app *di.Container) {
+	App = app
+
+	CLI.Execute()
+}
 
 func UseOFDL(cmd *cobra.Command, args []string) error {
-	c, err := ofdl.NewContainer(cmd.Context())
-	if err != nil {
-		return err
-	}
-
-	return c.Resolve(&OFDL)
+	App.Provide(func() context.Context { return cmd.Context() })
+	return App.Resolve(&OFDL)
 }
 
 var CLI = &cobra.Command{

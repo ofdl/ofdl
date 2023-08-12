@@ -8,7 +8,8 @@ import (
 )
 
 type OFDLDataAPI interface {
-	GetEnabledSubscriptions() ([]model.Subscription, error)
+	GetSubscriptions() ([]*model.Subscription, error)
+	GetEnabledSubscriptions() ([]*model.Subscription, error)
 
 	SaveSubscription(onlyfans.Subscription) error
 	SaveMediaPost(onlyfans.MediaPost) error

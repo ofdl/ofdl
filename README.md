@@ -103,6 +103,10 @@ You can check database statistics by running `ofdl stats`.
    ```bash
    ofdl scrape subscriptions
    ```
+0. Enable or Disable individual subscriptions:
+   ```bash
+   ofdl subscriptions
+   ```
 0. Scrape media posts:
    ```bash
    ofdl scrape media-posts
