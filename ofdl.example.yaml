@@ -1,5 +1,6 @@
 downloads:
     downloader: local
+    batch-size: 1000
     local:
         root: ./downloads
     aria2:

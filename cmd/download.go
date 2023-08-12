@@ -13,8 +13,14 @@ var downloadCmd = &cobra.Command{
 	Long: `Download media
 
 OFDL uses your configured Downloader (Local or Aria2) to manage downloads.
-After you've configured your downloader, this command will queue up to 1,000
-ndownloaded media.
+After you've configured your downloader, this command will queue up to
+"downloads.batch-size" downloaded media. Once a media has successfully
+downloaded (or queued, in the case of Aria2), it will be marked as downloaded
+in the database. If you run this command again, it will only queue up media that
+has not been downloaded yet.
+
+Adjust the "downloads.batch-size" flag to control how many media are downloaded
+at once.
 `,
 	PersistentPreRunE: UseOFDL,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -35,7 +41,7 @@ var downloadPostsCmd = &cobra.Command{
 	Short:   "Download media posts",
 	Aliases: []string{"media", "mp"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		missing, err := OFDL.GetMissingMedia(1000)
+		missing, err := OFDL.GetMissingMedia(viper.GetInt("downloads.batch-size"))
 		if err != nil {
 			return err
 		}
@@ -58,7 +64,7 @@ var downloadMessagesCmd = &cobra.Command{
 	Short:   "Download messages",
 	Aliases: []string{"msg"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		missing, err := OFDL.GetMissingMessageMedia(1000)
+		missing, err := OFDL.GetMissingMessageMedia(viper.GetInt("downloads.batch-size"))
 		if err != nil {
 			return err
 		}
@@ -83,6 +89,8 @@ func init() {
 
 	downloadCmd.PersistentFlags().String("downloader", "", "Download method (local, aria2)")
 	viper.BindPFlag("downloads.downloader", downloadCmd.PersistentFlags().Lookup("downloader"))
+	downloadCmd.PersistentFlags().Int("batch-size", 1000, "Number of media to download at once")
+	viper.BindPFlag("downloads.batch-size", downloadCmd.PersistentFlags().Lookup("batch-size"))
 
 	downloadCmd.PersistentFlags().String("local-root", "", "Root directory for Local downloads")
 	viper.BindPFlag("downloads.local.root", downloadCmd.PersistentFlags().Lookup("local-root"))

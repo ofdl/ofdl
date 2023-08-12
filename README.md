@@ -122,6 +122,12 @@ You can check database statistics by running `ofdl stats`.
 
 ### Downloading
 
+0. Optionally adjust your "batch size", which specifies how many undownloaded
+   media are queued for download.
+   ```bash
+   ofdl config set downloads.batch-size 50
+   ```
+
 0. Download up to 1,000 undownloaded post media:
    ```bash
    ofdl download media-posts
