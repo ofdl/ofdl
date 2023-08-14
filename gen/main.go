@@ -25,6 +25,8 @@ func main() {
 		model.Subscription{},
 		model.Post{},
 		model.Media{},
+		model.Message{},
+		model.MessageMedia{},
 	)
 
 	// Generate Type Safe API with Dynamic SQL defined on Querier interface for `model.User` and `model.Company`

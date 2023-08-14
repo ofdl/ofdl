@@ -18,6 +18,7 @@ import (
 var (
 	Q            = new(Query)
 	Media        *media
+	Message      *message
 	MessageMedia *messageMedia
 	Post         *post
 	Subscription *subscription
@@ -26,6 +27,7 @@ var (
 func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	*Q = *Use(db, opts...)
 	Media = &Q.Media
+	Message = &Q.Message
 	MessageMedia = &Q.MessageMedia
 	Post = &Q.Post
 	Subscription = &Q.Subscription
@@ -35,6 +37,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 	return &Query{
 		db:           db,
 		Media:        newMedia(db, opts...),
+		Message:      newMessage(db, opts...),
 		MessageMedia: newMessageMedia(db, opts...),
 		Post:         newPost(db, opts...),
 		Subscription: newSubscription(db, opts...),
@@ -45,6 +48,7 @@ type Query struct {
 	db *gorm.DB
 
 	Media        media
+	Message      message
 	MessageMedia messageMedia
 	Post         post
 	Subscription subscription
@@ -56,6 +60,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
 		db:           db,
 		Media:        q.Media.clone(db),
+		Message:      q.Message.clone(db),
 		MessageMedia: q.MessageMedia.clone(db),
 		Post:         q.Post.clone(db),
 		Subscription: q.Subscription.clone(db),
@@ -74,6 +79,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 	return &Query{
 		db:           db,
 		Media:        q.Media.replaceDB(db),
+		Message:      q.Message.replaceDB(db),
 		MessageMedia: q.MessageMedia.replaceDB(db),
 		Post:         q.Post.replaceDB(db),
 		Subscription: q.Subscription.replaceDB(db),
@@ -82,6 +88,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 
 type queryCtx struct {
 	Media        IMediaDo
+	Message      IMessageDo
 	MessageMedia IMessageMediaDo
 	Post         IPostDo
 	Subscription ISubscriptionDo
@@ -90,6 +97,7 @@ type queryCtx struct {
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
 		Media:        q.Media.WithContext(ctx),
+		Message:      q.Message.WithContext(ctx),
 		MessageMedia: q.MessageMedia.WithContext(ctx),
 		Post:         q.Post.WithContext(ctx),
 		Subscription: q.Subscription.WithContext(ctx),

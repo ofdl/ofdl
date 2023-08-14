@@ -49,6 +49,25 @@ var statsCmd = &cobra.Command{
 		}
 		fmt.Printf("Media Count (Unorganized): %d\n", uomCount)
 
+		mm := OFDL.Query.MessageMedia
+		mmCount, err := mm.Count()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Message Media Count: %d\n", mmCount)
+
+		udmmCount, err := mm.Where(mm.DownloadedAt.IsNull()).Count()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Message Media Count (Undownloaded): %d\n", udmmCount)
+
+		uommCount, err := mm.Where(mm.OrganizedAt.IsNull()).Count()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Message Media Count (Unorganized): %d\n", uommCount)
+
 		return nil
 	},
 }
