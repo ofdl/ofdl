@@ -58,6 +58,9 @@ $PWD/ofdl.yaml. The following is a comprehensive example configuration file:
       secret: secret
       # Root directory for Aria downloads
       root: /ofdl
+      # Platform on which Aria is running. Only "windows" has an affect, sending
+      # Windows-style paths to Aria
+      platform: linux
 `,
 }
 

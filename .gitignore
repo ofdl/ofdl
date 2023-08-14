@@ -2,6 +2,7 @@
 /ofdl.yaml
 /ofdl.sqlite
 /downloads
+/backups
 
 # goreleaser
 dist/

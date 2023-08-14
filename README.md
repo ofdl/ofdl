@@ -79,9 +79,19 @@ ofdl config set downloads.aria2.secret my-super-notasecret
 ofdl config set downloads.aria2.root /mnt/data
 ```
 
+If Aria2 is running on Windows, specify the platform and use a Windows-style
+root directory:
+
+```bash
+ofdl config set downloads.aria2.platform windows
+ofdl config set downloads.aria2.root "D:\Downloads"
+```
+
 ### Organizing
 
-If you run your own Stash server, OFDL can assign a Studio and Performer, as well as other post metadata. Just configure your stash server address and a corresponding Studio ID:
+If you run your own Stash server, OFDL can assign a Studio and Performer, as
+well as other post metadata. Just configure your stash server address and a
+corresponding Studio ID:
 
 ```bash
 ofdl config set stash.address http://stash:9999/graphql
@@ -127,7 +137,6 @@ You can check database statistics by running `ofdl stats`.
    ```bash
    ofdl config set downloads.batch-size 50
    ```
-
 0. Download up to 1,000 undownloaded post media:
    ```bash
    ofdl download media-posts
@@ -158,4 +167,5 @@ You can check database statistics by running `ofdl stats`.
 
 # Thanks
 
-Thanks to [DIGITALCRIMINALS](https://github.com/DIGITALCRIMINALS) for maintaining dynamic parameters.
+Thanks to [DIGITALCRIMINALS](https://github.com/DIGITALCRIMINALS) for
+maintaining dynamic parameters.

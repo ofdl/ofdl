@@ -1,10 +1,13 @@
 package downloader
 
 import (
-	"path/filepath"
+	"fmt"
+	"path"
+	"strings"
 
 	"github.com/ofdl/ofdl/model"
 	"github.com/siku2/arigo"
+	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
@@ -73,9 +76,14 @@ func (d *Aria2Downloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 			return
 		}
 
+		dir := path.Join(d.root, m.Directory())
+		if viper.GetString("downloads.aria2.platform") == "windows" {
+			dir = fmt.Sprintf("%s%s", d.root, strings.ReplaceAll(m.Directory(), "/", `\`))
+		}
+
 		_, err := d.rpc.AddURI([]string{m.URL()}, &arigo.Options{
 			Out: m.Filename(),
-			Dir: filepath.Join(d.root, m.Directory()),
+			Dir: dir,
 		})
 		if err != nil {
 
