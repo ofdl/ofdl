@@ -13,6 +13,7 @@ import (
 	"github.com/ofdl/ofdl/ent/message"
 	"github.com/ofdl/ofdl/ent/messagemedia"
 	"github.com/ofdl/ofdl/ent/predicate"
+	"github.com/ofdl/ofdl/ent/subscription"
 )
 
 // MessageUpdate is the builder for updating Message entities.
@@ -30,14 +31,7 @@ func (mu *MessageUpdate) Where(ps ...predicate.Message) *MessageUpdate {
 
 // SetSubscriptionID sets the "subscription_id" field.
 func (mu *MessageUpdate) SetSubscriptionID(i int) *MessageUpdate {
-	mu.mutation.ResetSubscriptionID()
 	mu.mutation.SetSubscriptionID(i)
-	return mu
-}
-
-// AddSubscriptionID adds i to the "subscription_id" field.
-func (mu *MessageUpdate) AddSubscriptionID(i int) *MessageUpdate {
-	mu.mutation.AddSubscriptionID(i)
 	return mu
 }
 
@@ -53,19 +47,24 @@ func (mu *MessageUpdate) SetPostedAt(s string) *MessageUpdate {
 	return mu
 }
 
-// AddMessageMediumIDs adds the "message_media" edge to the MessageMedia entity by IDs.
-func (mu *MessageUpdate) AddMessageMediumIDs(ids ...int) *MessageUpdate {
-	mu.mutation.AddMessageMediumIDs(ids...)
+// AddMediumIDs adds the "media" edge to the MessageMedia entity by IDs.
+func (mu *MessageUpdate) AddMediumIDs(ids ...int) *MessageUpdate {
+	mu.mutation.AddMediumIDs(ids...)
 	return mu
 }
 
-// AddMessageMedia adds the "message_media" edges to the MessageMedia entity.
-func (mu *MessageUpdate) AddMessageMedia(m ...*MessageMedia) *MessageUpdate {
+// AddMedia adds the "media" edges to the MessageMedia entity.
+func (mu *MessageUpdate) AddMedia(m ...*MessageMedia) *MessageUpdate {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return mu.AddMessageMediumIDs(ids...)
+	return mu.AddMediumIDs(ids...)
+}
+
+// SetSubscription sets the "subscription" edge to the Subscription entity.
+func (mu *MessageUpdate) SetSubscription(s *Subscription) *MessageUpdate {
+	return mu.SetSubscriptionID(s.ID)
 }
 
 // Mutation returns the MessageMutation object of the builder.
@@ -73,25 +72,31 @@ func (mu *MessageUpdate) Mutation() *MessageMutation {
 	return mu.mutation
 }
 
-// ClearMessageMedia clears all "message_media" edges to the MessageMedia entity.
-func (mu *MessageUpdate) ClearMessageMedia() *MessageUpdate {
-	mu.mutation.ClearMessageMedia()
+// ClearMedia clears all "media" edges to the MessageMedia entity.
+func (mu *MessageUpdate) ClearMedia() *MessageUpdate {
+	mu.mutation.ClearMedia()
 	return mu
 }
 
-// RemoveMessageMediumIDs removes the "message_media" edge to MessageMedia entities by IDs.
-func (mu *MessageUpdate) RemoveMessageMediumIDs(ids ...int) *MessageUpdate {
-	mu.mutation.RemoveMessageMediumIDs(ids...)
+// RemoveMediumIDs removes the "media" edge to MessageMedia entities by IDs.
+func (mu *MessageUpdate) RemoveMediumIDs(ids ...int) *MessageUpdate {
+	mu.mutation.RemoveMediumIDs(ids...)
 	return mu
 }
 
-// RemoveMessageMedia removes "message_media" edges to MessageMedia entities.
-func (mu *MessageUpdate) RemoveMessageMedia(m ...*MessageMedia) *MessageUpdate {
+// RemoveMedia removes "media" edges to MessageMedia entities.
+func (mu *MessageUpdate) RemoveMedia(m ...*MessageMedia) *MessageUpdate {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return mu.RemoveMessageMediumIDs(ids...)
+	return mu.RemoveMediumIDs(ids...)
+}
+
+// ClearSubscription clears the "subscription" edge to the Subscription entity.
+func (mu *MessageUpdate) ClearSubscription() *MessageUpdate {
+	mu.mutation.ClearSubscription()
+	return mu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -121,7 +126,18 @@ func (mu *MessageUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (mu *MessageUpdate) check() error {
+	if _, ok := mu.mutation.SubscriptionID(); mu.mutation.SubscriptionCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Message.subscription"`)
+	}
+	return nil
+}
+
 func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := mu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(message.Table, message.Columns, sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt))
 	if ps := mu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -130,24 +146,18 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := mu.mutation.SubscriptionID(); ok {
-		_spec.SetField(message.FieldSubscriptionID, field.TypeInt, value)
-	}
-	if value, ok := mu.mutation.AddedSubscriptionID(); ok {
-		_spec.AddField(message.FieldSubscriptionID, field.TypeInt, value)
-	}
 	if value, ok := mu.mutation.Text(); ok {
 		_spec.SetField(message.FieldText, field.TypeString, value)
 	}
 	if value, ok := mu.mutation.PostedAt(); ok {
 		_spec.SetField(message.FieldPostedAt, field.TypeString, value)
 	}
-	if mu.mutation.MessageMediaCleared() {
+	if mu.mutation.MediaCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   message.MessageMediaTable,
-			Columns: []string{message.MessageMediaColumn},
+			Table:   message.MediaTable,
+			Columns: []string{message.MediaColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt),
@@ -155,12 +165,12 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := mu.mutation.RemovedMessageMediaIDs(); len(nodes) > 0 && !mu.mutation.MessageMediaCleared() {
+	if nodes := mu.mutation.RemovedMediaIDs(); len(nodes) > 0 && !mu.mutation.MediaCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   message.MessageMediaTable,
-			Columns: []string{message.MessageMediaColumn},
+			Table:   message.MediaTable,
+			Columns: []string{message.MediaColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt),
@@ -171,15 +181,44 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := mu.mutation.MessageMediaIDs(); len(nodes) > 0 {
+	if nodes := mu.mutation.MediaIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   message.MessageMediaTable,
-			Columns: []string{message.MessageMediaColumn},
+			Table:   message.MediaTable,
+			Columns: []string{message.MediaColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if mu.mutation.SubscriptionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.SubscriptionTable,
+			Columns: []string{message.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscription.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.SubscriptionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.SubscriptionTable,
+			Columns: []string{message.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscription.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -209,14 +248,7 @@ type MessageUpdateOne struct {
 
 // SetSubscriptionID sets the "subscription_id" field.
 func (muo *MessageUpdateOne) SetSubscriptionID(i int) *MessageUpdateOne {
-	muo.mutation.ResetSubscriptionID()
 	muo.mutation.SetSubscriptionID(i)
-	return muo
-}
-
-// AddSubscriptionID adds i to the "subscription_id" field.
-func (muo *MessageUpdateOne) AddSubscriptionID(i int) *MessageUpdateOne {
-	muo.mutation.AddSubscriptionID(i)
 	return muo
 }
 
@@ -232,19 +264,24 @@ func (muo *MessageUpdateOne) SetPostedAt(s string) *MessageUpdateOne {
 	return muo
 }
 
-// AddMessageMediumIDs adds the "message_media" edge to the MessageMedia entity by IDs.
-func (muo *MessageUpdateOne) AddMessageMediumIDs(ids ...int) *MessageUpdateOne {
-	muo.mutation.AddMessageMediumIDs(ids...)
+// AddMediumIDs adds the "media" edge to the MessageMedia entity by IDs.
+func (muo *MessageUpdateOne) AddMediumIDs(ids ...int) *MessageUpdateOne {
+	muo.mutation.AddMediumIDs(ids...)
 	return muo
 }
 
-// AddMessageMedia adds the "message_media" edges to the MessageMedia entity.
-func (muo *MessageUpdateOne) AddMessageMedia(m ...*MessageMedia) *MessageUpdateOne {
+// AddMedia adds the "media" edges to the MessageMedia entity.
+func (muo *MessageUpdateOne) AddMedia(m ...*MessageMedia) *MessageUpdateOne {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return muo.AddMessageMediumIDs(ids...)
+	return muo.AddMediumIDs(ids...)
+}
+
+// SetSubscription sets the "subscription" edge to the Subscription entity.
+func (muo *MessageUpdateOne) SetSubscription(s *Subscription) *MessageUpdateOne {
+	return muo.SetSubscriptionID(s.ID)
 }
 
 // Mutation returns the MessageMutation object of the builder.
@@ -252,25 +289,31 @@ func (muo *MessageUpdateOne) Mutation() *MessageMutation {
 	return muo.mutation
 }
 
-// ClearMessageMedia clears all "message_media" edges to the MessageMedia entity.
-func (muo *MessageUpdateOne) ClearMessageMedia() *MessageUpdateOne {
-	muo.mutation.ClearMessageMedia()
+// ClearMedia clears all "media" edges to the MessageMedia entity.
+func (muo *MessageUpdateOne) ClearMedia() *MessageUpdateOne {
+	muo.mutation.ClearMedia()
 	return muo
 }
 
-// RemoveMessageMediumIDs removes the "message_media" edge to MessageMedia entities by IDs.
-func (muo *MessageUpdateOne) RemoveMessageMediumIDs(ids ...int) *MessageUpdateOne {
-	muo.mutation.RemoveMessageMediumIDs(ids...)
+// RemoveMediumIDs removes the "media" edge to MessageMedia entities by IDs.
+func (muo *MessageUpdateOne) RemoveMediumIDs(ids ...int) *MessageUpdateOne {
+	muo.mutation.RemoveMediumIDs(ids...)
 	return muo
 }
 
-// RemoveMessageMedia removes "message_media" edges to MessageMedia entities.
-func (muo *MessageUpdateOne) RemoveMessageMedia(m ...*MessageMedia) *MessageUpdateOne {
+// RemoveMedia removes "media" edges to MessageMedia entities.
+func (muo *MessageUpdateOne) RemoveMedia(m ...*MessageMedia) *MessageUpdateOne {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return muo.RemoveMessageMediumIDs(ids...)
+	return muo.RemoveMediumIDs(ids...)
+}
+
+// ClearSubscription clears the "subscription" edge to the Subscription entity.
+func (muo *MessageUpdateOne) ClearSubscription() *MessageUpdateOne {
+	muo.mutation.ClearSubscription()
+	return muo
 }
 
 // Where appends a list predicates to the MessageUpdate builder.
@@ -313,7 +356,18 @@ func (muo *MessageUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (muo *MessageUpdateOne) check() error {
+	if _, ok := muo.mutation.SubscriptionID(); muo.mutation.SubscriptionCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Message.subscription"`)
+	}
+	return nil
+}
+
 func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err error) {
+	if err := muo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(message.Table, message.Columns, sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt))
 	id, ok := muo.mutation.ID()
 	if !ok {
@@ -339,24 +393,18 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 			}
 		}
 	}
-	if value, ok := muo.mutation.SubscriptionID(); ok {
-		_spec.SetField(message.FieldSubscriptionID, field.TypeInt, value)
-	}
-	if value, ok := muo.mutation.AddedSubscriptionID(); ok {
-		_spec.AddField(message.FieldSubscriptionID, field.TypeInt, value)
-	}
 	if value, ok := muo.mutation.Text(); ok {
 		_spec.SetField(message.FieldText, field.TypeString, value)
 	}
 	if value, ok := muo.mutation.PostedAt(); ok {
 		_spec.SetField(message.FieldPostedAt, field.TypeString, value)
 	}
-	if muo.mutation.MessageMediaCleared() {
+	if muo.mutation.MediaCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   message.MessageMediaTable,
-			Columns: []string{message.MessageMediaColumn},
+			Table:   message.MediaTable,
+			Columns: []string{message.MediaColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt),
@@ -364,12 +412,12 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := muo.mutation.RemovedMessageMediaIDs(); len(nodes) > 0 && !muo.mutation.MessageMediaCleared() {
+	if nodes := muo.mutation.RemovedMediaIDs(); len(nodes) > 0 && !muo.mutation.MediaCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   message.MessageMediaTable,
-			Columns: []string{message.MessageMediaColumn},
+			Table:   message.MediaTable,
+			Columns: []string{message.MediaColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt),
@@ -380,15 +428,44 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := muo.mutation.MessageMediaIDs(); len(nodes) > 0 {
+	if nodes := muo.mutation.MediaIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   message.MessageMediaTable,
-			Columns: []string{message.MessageMediaColumn},
+			Table:   message.MediaTable,
+			Columns: []string{message.MediaColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if muo.mutation.SubscriptionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.SubscriptionTable,
+			Columns: []string{message.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscription.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.SubscriptionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   message.SubscriptionTable,
+			Columns: []string{message.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscription.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

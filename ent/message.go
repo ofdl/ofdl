@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/ofdl/ofdl/ent/message"
+	"github.com/ofdl/ofdl/ent/subscription"
 )
 
 // Message is the model entity for the Message schema.
@@ -30,20 +31,35 @@ type Message struct {
 
 // MessageEdges holds the relations/edges for other nodes in the graph.
 type MessageEdges struct {
-	// MessageMedia holds the value of the message_media edge.
-	MessageMedia []*MessageMedia `json:"message_media,omitempty"`
+	// Media holds the value of the media edge.
+	Media []*MessageMedia `json:"media,omitempty"`
+	// Subscription holds the value of the subscription edge.
+	Subscription *Subscription `json:"subscription,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
-// MessageMediaOrErr returns the MessageMedia value or an error if the edge
+// MediaOrErr returns the Media value or an error if the edge
 // was not loaded in eager-loading.
-func (e MessageEdges) MessageMediaOrErr() ([]*MessageMedia, error) {
+func (e MessageEdges) MediaOrErr() ([]*MessageMedia, error) {
 	if e.loadedTypes[0] {
-		return e.MessageMedia, nil
+		return e.Media, nil
 	}
-	return nil, &NotLoadedError{edge: "message_media"}
+	return nil, &NotLoadedError{edge: "media"}
+}
+
+// SubscriptionOrErr returns the Subscription value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MessageEdges) SubscriptionOrErr() (*Subscription, error) {
+	if e.loadedTypes[1] {
+		if e.Subscription == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: subscription.Label}
+		}
+		return e.Subscription, nil
+	}
+	return nil, &NotLoadedError{edge: "subscription"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -107,9 +123,14 @@ func (m *Message) Value(name string) (ent.Value, error) {
 	return m.selectValues.Get(name)
 }
 
-// QueryMessageMedia queries the "message_media" edge of the Message entity.
-func (m *Message) QueryMessageMedia() *MessageMediaQuery {
-	return NewMessageClient(m.config).QueryMessageMedia(m)
+// QueryMedia queries the "media" edge of the Message entity.
+func (m *Message) QueryMedia() *MessageMediaQuery {
+	return NewMessageClient(m.config).QueryMedia(m)
+}
+
+// QuerySubscription queries the "subscription" edge of the Message entity.
+func (m *Message) QuerySubscription() *SubscriptionQuery {
+	return NewMessageClient(m.config).QuerySubscription(m)
 }
 
 // Update returns a builder for updating this Message.

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/ofdl/ofdl/ent/media"
+	"github.com/ofdl/ofdl/ent/post"
 	"github.com/ofdl/ofdl/ent/predicate"
 )
 
@@ -30,14 +31,7 @@ func (mu *MediaUpdate) Where(ps ...predicate.Media) *MediaUpdate {
 
 // SetPostID sets the "post_id" field.
 func (mu *MediaUpdate) SetPostID(i int) *MediaUpdate {
-	mu.mutation.ResetPostID()
 	mu.mutation.SetPostID(i)
-	return mu
-}
-
-// AddPostID adds i to the "post_id" field.
-func (mu *MediaUpdate) AddPostID(i int) *MediaUpdate {
-	mu.mutation.AddPostID(i)
 	return mu
 }
 
@@ -79,6 +73,20 @@ func (mu *MediaUpdate) SetStashID(s string) *MediaUpdate {
 	return mu
 }
 
+// SetNillableStashID sets the "stash_id" field if the given value is not nil.
+func (mu *MediaUpdate) SetNillableStashID(s *string) *MediaUpdate {
+	if s != nil {
+		mu.SetStashID(*s)
+	}
+	return mu
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (mu *MediaUpdate) ClearStashID() *MediaUpdate {
+	mu.mutation.ClearStashID()
+	return mu
+}
+
 // SetOrganizedAt sets the "organized_at" field.
 func (mu *MediaUpdate) SetOrganizedAt(t time.Time) *MediaUpdate {
 	mu.mutation.SetOrganizedAt(t)
@@ -99,13 +107,45 @@ func (mu *MediaUpdate) ClearOrganizedAt() *MediaUpdate {
 	return mu
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (mu *MediaUpdate) SetCreatedAt(t time.Time) *MediaUpdate {
+	mu.mutation.SetCreatedAt(t)
+	return mu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (mu *MediaUpdate) SetNillableCreatedAt(t *time.Time) *MediaUpdate {
+	if t != nil {
+		mu.SetCreatedAt(*t)
+	}
+	return mu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (mu *MediaUpdate) SetUpdatedAt(t time.Time) *MediaUpdate {
+	mu.mutation.SetUpdatedAt(t)
+	return mu
+}
+
+// SetPost sets the "post" edge to the Post entity.
+func (mu *MediaUpdate) SetPost(p *Post) *MediaUpdate {
+	return mu.SetPostID(p.ID)
+}
+
 // Mutation returns the MediaMutation object of the builder.
 func (mu *MediaUpdate) Mutation() *MediaMutation {
 	return mu.mutation
 }
 
+// ClearPost clears the "post" edge to the Post entity.
+func (mu *MediaUpdate) ClearPost() *MediaUpdate {
+	mu.mutation.ClearPost()
+	return mu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (mu *MediaUpdate) Save(ctx context.Context) (int, error) {
+	mu.defaults()
 	return withHooks(ctx, mu.sqlSave, mu.mutation, mu.hooks)
 }
 
@@ -131,7 +171,26 @@ func (mu *MediaUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (mu *MediaUpdate) defaults() {
+	if _, ok := mu.mutation.UpdatedAt(); !ok {
+		v := media.UpdateDefaultUpdatedAt()
+		mu.mutation.SetUpdatedAt(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (mu *MediaUpdate) check() error {
+	if _, ok := mu.mutation.PostID(); mu.mutation.PostCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Media.post"`)
+	}
+	return nil
+}
+
 func (mu *MediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := mu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(media.Table, media.Columns, sqlgraph.NewFieldSpec(media.FieldID, field.TypeInt))
 	if ps := mu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -139,12 +198,6 @@ func (mu *MediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := mu.mutation.PostID(); ok {
-		_spec.SetField(media.FieldPostID, field.TypeInt, value)
-	}
-	if value, ok := mu.mutation.AddedPostID(); ok {
-		_spec.AddField(media.FieldPostID, field.TypeInt, value)
 	}
 	if value, ok := mu.mutation.GetType(); ok {
 		_spec.SetField(media.FieldType, field.TypeString, value)
@@ -161,11 +214,49 @@ func (mu *MediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := mu.mutation.StashID(); ok {
 		_spec.SetField(media.FieldStashID, field.TypeString, value)
 	}
+	if mu.mutation.StashIDCleared() {
+		_spec.ClearField(media.FieldStashID, field.TypeString)
+	}
 	if value, ok := mu.mutation.OrganizedAt(); ok {
 		_spec.SetField(media.FieldOrganizedAt, field.TypeTime, value)
 	}
 	if mu.mutation.OrganizedAtCleared() {
 		_spec.ClearField(media.FieldOrganizedAt, field.TypeTime)
+	}
+	if value, ok := mu.mutation.CreatedAt(); ok {
+		_spec.SetField(media.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := mu.mutation.UpdatedAt(); ok {
+		_spec.SetField(media.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if mu.mutation.PostCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   media.PostTable,
+			Columns: []string{media.PostColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.PostIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   media.PostTable,
+			Columns: []string{media.PostColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -189,14 +280,7 @@ type MediaUpdateOne struct {
 
 // SetPostID sets the "post_id" field.
 func (muo *MediaUpdateOne) SetPostID(i int) *MediaUpdateOne {
-	muo.mutation.ResetPostID()
 	muo.mutation.SetPostID(i)
-	return muo
-}
-
-// AddPostID adds i to the "post_id" field.
-func (muo *MediaUpdateOne) AddPostID(i int) *MediaUpdateOne {
-	muo.mutation.AddPostID(i)
 	return muo
 }
 
@@ -238,6 +322,20 @@ func (muo *MediaUpdateOne) SetStashID(s string) *MediaUpdateOne {
 	return muo
 }
 
+// SetNillableStashID sets the "stash_id" field if the given value is not nil.
+func (muo *MediaUpdateOne) SetNillableStashID(s *string) *MediaUpdateOne {
+	if s != nil {
+		muo.SetStashID(*s)
+	}
+	return muo
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (muo *MediaUpdateOne) ClearStashID() *MediaUpdateOne {
+	muo.mutation.ClearStashID()
+	return muo
+}
+
 // SetOrganizedAt sets the "organized_at" field.
 func (muo *MediaUpdateOne) SetOrganizedAt(t time.Time) *MediaUpdateOne {
 	muo.mutation.SetOrganizedAt(t)
@@ -258,9 +356,40 @@ func (muo *MediaUpdateOne) ClearOrganizedAt() *MediaUpdateOne {
 	return muo
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (muo *MediaUpdateOne) SetCreatedAt(t time.Time) *MediaUpdateOne {
+	muo.mutation.SetCreatedAt(t)
+	return muo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (muo *MediaUpdateOne) SetNillableCreatedAt(t *time.Time) *MediaUpdateOne {
+	if t != nil {
+		muo.SetCreatedAt(*t)
+	}
+	return muo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (muo *MediaUpdateOne) SetUpdatedAt(t time.Time) *MediaUpdateOne {
+	muo.mutation.SetUpdatedAt(t)
+	return muo
+}
+
+// SetPost sets the "post" edge to the Post entity.
+func (muo *MediaUpdateOne) SetPost(p *Post) *MediaUpdateOne {
+	return muo.SetPostID(p.ID)
+}
+
 // Mutation returns the MediaMutation object of the builder.
 func (muo *MediaUpdateOne) Mutation() *MediaMutation {
 	return muo.mutation
+}
+
+// ClearPost clears the "post" edge to the Post entity.
+func (muo *MediaUpdateOne) ClearPost() *MediaUpdateOne {
+	muo.mutation.ClearPost()
+	return muo
 }
 
 // Where appends a list predicates to the MediaUpdate builder.
@@ -278,6 +407,7 @@ func (muo *MediaUpdateOne) Select(field string, fields ...string) *MediaUpdateOn
 
 // Save executes the query and returns the updated Media entity.
 func (muo *MediaUpdateOne) Save(ctx context.Context) (*Media, error) {
+	muo.defaults()
 	return withHooks(ctx, muo.sqlSave, muo.mutation, muo.hooks)
 }
 
@@ -303,7 +433,26 @@ func (muo *MediaUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (muo *MediaUpdateOne) defaults() {
+	if _, ok := muo.mutation.UpdatedAt(); !ok {
+		v := media.UpdateDefaultUpdatedAt()
+		muo.mutation.SetUpdatedAt(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (muo *MediaUpdateOne) check() error {
+	if _, ok := muo.mutation.PostID(); muo.mutation.PostCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Media.post"`)
+	}
+	return nil
+}
+
 func (muo *MediaUpdateOne) sqlSave(ctx context.Context) (_node *Media, err error) {
+	if err := muo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(media.Table, media.Columns, sqlgraph.NewFieldSpec(media.FieldID, field.TypeInt))
 	id, ok := muo.mutation.ID()
 	if !ok {
@@ -329,12 +478,6 @@ func (muo *MediaUpdateOne) sqlSave(ctx context.Context) (_node *Media, err error
 			}
 		}
 	}
-	if value, ok := muo.mutation.PostID(); ok {
-		_spec.SetField(media.FieldPostID, field.TypeInt, value)
-	}
-	if value, ok := muo.mutation.AddedPostID(); ok {
-		_spec.AddField(media.FieldPostID, field.TypeInt, value)
-	}
 	if value, ok := muo.mutation.GetType(); ok {
 		_spec.SetField(media.FieldType, field.TypeString, value)
 	}
@@ -350,11 +493,49 @@ func (muo *MediaUpdateOne) sqlSave(ctx context.Context) (_node *Media, err error
 	if value, ok := muo.mutation.StashID(); ok {
 		_spec.SetField(media.FieldStashID, field.TypeString, value)
 	}
+	if muo.mutation.StashIDCleared() {
+		_spec.ClearField(media.FieldStashID, field.TypeString)
+	}
 	if value, ok := muo.mutation.OrganizedAt(); ok {
 		_spec.SetField(media.FieldOrganizedAt, field.TypeTime, value)
 	}
 	if muo.mutation.OrganizedAtCleared() {
 		_spec.ClearField(media.FieldOrganizedAt, field.TypeTime)
+	}
+	if value, ok := muo.mutation.CreatedAt(); ok {
+		_spec.SetField(media.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := muo.mutation.UpdatedAt(); ok {
+		_spec.SetField(media.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if muo.mutation.PostCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   media.PostTable,
+			Columns: []string{media.PostColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.PostIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   media.PostTable,
+			Columns: []string{media.PostColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Media{config: muo.config}
 	_spec.Assign = _node.assignValues

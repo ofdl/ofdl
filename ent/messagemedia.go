@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/ofdl/ofdl/ent/message"
 	"github.com/ofdl/ofdl/ent/messagemedia"
 )
 
@@ -28,9 +29,33 @@ type MessageMedia struct {
 	// StashID holds the value of the "stash_id" field.
 	StashID string `json:"stash_id,omitempty"`
 	// OrganizedAt holds the value of the "organized_at" field.
-	OrganizedAt  time.Time `json:"organized_at,omitempty"`
-	message_id   *int
+	OrganizedAt time.Time `json:"organized_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the MessageMediaQuery when eager-loading is set.
+	Edges        MessageMediaEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// MessageMediaEdges holds the relations/edges for other nodes in the graph.
+type MessageMediaEdges struct {
+	// Message holds the value of the message edge.
+	Message *Message `json:"message,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// MessageOrErr returns the Message value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MessageMediaEdges) MessageOrErr() (*Message, error) {
+	if e.loadedTypes[0] {
+		if e.Message == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: message.Label}
+		}
+		return e.Message, nil
+	}
+	return nil, &NotLoadedError{edge: "message"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -44,8 +69,6 @@ func (*MessageMedia) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case messagemedia.FieldDownloadedAt, messagemedia.FieldOrganizedAt:
 			values[i] = new(sql.NullTime)
-		case messagemedia.ForeignKeys[0]: // message_id
-			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -103,13 +126,6 @@ func (mm *MessageMedia) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				mm.OrganizedAt = value.Time
 			}
-		case messagemedia.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field message_id", value)
-			} else if value.Valid {
-				mm.message_id = new(int)
-				*mm.message_id = int(value.Int64)
-			}
 		default:
 			mm.selectValues.Set(columns[i], values[i])
 		}
@@ -121,6 +137,11 @@ func (mm *MessageMedia) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (mm *MessageMedia) Value(name string) (ent.Value, error) {
 	return mm.selectValues.Get(name)
+}
+
+// QueryMessage queries the "message" edge of the MessageMedia entity.
+func (mm *MessageMedia) QueryMessage() *MessageQuery {
+	return NewMessageMediaClient(mm.config).QueryMessage(mm)
 }
 
 // Update returns a builder for updating this MessageMedia.

@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ofdl/ofdl/ent/message"
 	"github.com/ofdl/ofdl/ent/messagemedia"
 	"github.com/ofdl/ofdl/ent/predicate"
 )
@@ -17,11 +18,11 @@ import (
 // MessageMediaQuery is the builder for querying MessageMedia entities.
 type MessageMediaQuery struct {
 	config
-	ctx        *QueryContext
-	order      []messagemedia.OrderOption
-	inters     []Interceptor
-	predicates []predicate.MessageMedia
-	withFKs    bool
+	ctx         *QueryContext
+	order       []messagemedia.OrderOption
+	inters      []Interceptor
+	predicates  []predicate.MessageMedia
+	withMessage *MessageQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -56,6 +57,28 @@ func (mmq *MessageMediaQuery) Unique(unique bool) *MessageMediaQuery {
 func (mmq *MessageMediaQuery) Order(o ...messagemedia.OrderOption) *MessageMediaQuery {
 	mmq.order = append(mmq.order, o...)
 	return mmq
+}
+
+// QueryMessage chains the current query on the "message" edge.
+func (mmq *MessageMediaQuery) QueryMessage() *MessageQuery {
+	query := (&MessageClient{config: mmq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mmq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mmq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(messagemedia.Table, messagemedia.FieldID, selector),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, messagemedia.MessageTable, messagemedia.MessageColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mmq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first MessageMedia entity from the query.
@@ -245,15 +268,27 @@ func (mmq *MessageMediaQuery) Clone() *MessageMediaQuery {
 		return nil
 	}
 	return &MessageMediaQuery{
-		config:     mmq.config,
-		ctx:        mmq.ctx.Clone(),
-		order:      append([]messagemedia.OrderOption{}, mmq.order...),
-		inters:     append([]Interceptor{}, mmq.inters...),
-		predicates: append([]predicate.MessageMedia{}, mmq.predicates...),
+		config:      mmq.config,
+		ctx:         mmq.ctx.Clone(),
+		order:       append([]messagemedia.OrderOption{}, mmq.order...),
+		inters:      append([]Interceptor{}, mmq.inters...),
+		predicates:  append([]predicate.MessageMedia{}, mmq.predicates...),
+		withMessage: mmq.withMessage.Clone(),
 		// clone intermediate query.
 		sql:  mmq.sql.Clone(),
 		path: mmq.path,
 	}
+}
+
+// WithMessage tells the query-builder to eager-load the nodes that are connected to
+// the "message" edge. The optional arguments are used to configure the query builder of the edge.
+func (mmq *MessageMediaQuery) WithMessage(opts ...func(*MessageQuery)) *MessageMediaQuery {
+	query := (&MessageClient{config: mmq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mmq.withMessage = query
+	return mmq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -332,19 +367,19 @@ func (mmq *MessageMediaQuery) prepareQuery(ctx context.Context) error {
 
 func (mmq *MessageMediaQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*MessageMedia, error) {
 	var (
-		nodes   = []*MessageMedia{}
-		withFKs = mmq.withFKs
-		_spec   = mmq.querySpec()
+		nodes       = []*MessageMedia{}
+		_spec       = mmq.querySpec()
+		loadedTypes = [1]bool{
+			mmq.withMessage != nil,
+		}
 	)
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, messagemedia.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*MessageMedia).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &MessageMedia{config: mmq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -356,7 +391,43 @@ func (mmq *MessageMediaQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := mmq.withMessage; query != nil {
+		if err := mmq.loadMessage(ctx, query, nodes, nil,
+			func(n *MessageMedia, e *Message) { n.Edges.Message = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (mmq *MessageMediaQuery) loadMessage(ctx context.Context, query *MessageQuery, nodes []*MessageMedia, init func(*MessageMedia), assign func(*MessageMedia, *Message)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*MessageMedia)
+	for i := range nodes {
+		fk := nodes[i].MessageID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(message.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "message_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (mmq *MessageMediaQuery) sqlCount(ctx context.Context) (int, error) {
@@ -383,6 +454,9 @@ func (mmq *MessageMediaQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != messagemedia.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if mmq.withMessage != nil {
+			_spec.Node.AddColumnOnce(messagemedia.FieldMessageID)
 		}
 	}
 	if ps := mmq.predicates; len(ps) > 0 {

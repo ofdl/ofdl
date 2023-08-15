@@ -321,6 +321,22 @@ func (c *MediaClient) GetX(ctx context.Context, id int) *Media {
 	return obj
 }
 
+// QueryPost queries the post edge of a Media.
+func (c *MediaClient) QueryPost(m *Media) *PostQuery {
+	query := (&PostClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(media.Table, media.FieldID, id),
+			sqlgraph.To(post.Table, post.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, media.PostTable, media.PostColumn),
+		)
+		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *MediaClient) Hooks() []Hook {
 	return c.hooks.Media
@@ -439,15 +455,31 @@ func (c *MessageClient) GetX(ctx context.Context, id int) *Message {
 	return obj
 }
 
-// QueryMessageMedia queries the message_media edge of a Message.
-func (c *MessageClient) QueryMessageMedia(m *Message) *MessageMediaQuery {
+// QueryMedia queries the media edge of a Message.
+func (c *MessageClient) QueryMedia(m *Message) *MessageMediaQuery {
 	query := (&MessageMediaClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(message.Table, message.FieldID, id),
 			sqlgraph.To(messagemedia.Table, messagemedia.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, message.MessageMediaTable, message.MessageMediaColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, message.MediaTable, message.MediaColumn),
+		)
+		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySubscription queries the subscription edge of a Message.
+func (c *MessageClient) QuerySubscription(m *Message) *SubscriptionQuery {
+	query := (&SubscriptionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, id),
+			sqlgraph.To(subscription.Table, subscription.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, message.SubscriptionTable, message.SubscriptionColumn),
 		)
 		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
 		return fromV, nil
@@ -571,6 +603,22 @@ func (c *MessageMediaClient) GetX(ctx context.Context, id int) *MessageMedia {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryMessage queries the message edge of a MessageMedia.
+func (c *MessageMediaClient) QueryMessage(mm *MessageMedia) *MessageQuery {
+	query := (&MessageClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := mm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(messagemedia.Table, messagemedia.FieldID, id),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, messagemedia.MessageTable, messagemedia.MessageColumn),
+		)
+		fromV = sqlgraph.Neighbors(mm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -707,6 +755,22 @@ func (c *PostClient) QueryMedias(po *Post) *MediaQuery {
 	return query
 }
 
+// QuerySubscription queries the subscription edge of a Post.
+func (c *PostClient) QuerySubscription(po *Post) *SubscriptionQuery {
+	query := (&SubscriptionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := po.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, id),
+			sqlgraph.To(subscription.Table, subscription.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, post.SubscriptionTable, post.SubscriptionColumn),
+		)
+		fromV = sqlgraph.Neighbors(po.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PostClient) Hooks() []Hook {
 	return c.hooks.Post
@@ -834,6 +898,22 @@ func (c *SubscriptionClient) QueryPosts(s *Subscription) *PostQuery {
 			sqlgraph.From(subscription.Table, subscription.FieldID, id),
 			sqlgraph.To(post.Table, post.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, subscription.PostsTable, subscription.PostsColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMessages queries the messages edge of a Subscription.
+func (c *SubscriptionClient) QueryMessages(s *Subscription) *MessageQuery {
+	query := (&MessageClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(subscription.Table, subscription.FieldID, id),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, subscription.MessagesTable, subscription.MessagesColumn),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil

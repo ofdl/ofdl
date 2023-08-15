@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ofdl/ofdl/ent"
+	"github.com/ofdl/ofdl/ent/subscription"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
@@ -59,10 +61,19 @@ database.
 				return err
 			}
 
-			for _, sub := range subs {
-				if err := OFDL.Data.SaveSubscription(sub); err != nil {
+			for _, v := range subs {
+				err := OFDL.Ent.Subscription.Create().
+					SetID(v.ID).
+					SetAvatar(v.Avatar).
+					SetHeader(v.Header).
+					SetName(v.Name).
+					SetUsername(v.Username).
+					OnConflict().UpdateNewValues().
+					Exec(cmd.Context())
+				if err != nil {
 					return err
 				}
+
 				bar.Add(1)
 			}
 		}
@@ -82,7 +93,7 @@ that is scraped. This allows for incremental scraping of media posts.
 `,
 	Aliases: []string{"media", "mp"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		subs, err := OFDL.Data.GetEnabledSubscriptions()
+		subs, err := OFDL.Ent.Subscription.Query().Where(subscription.EnabledEQ(true)).All(cmd.Context())
 		if err != nil {
 			return err
 		}
@@ -115,7 +126,28 @@ that is scraped. This allows for incremental scraping of media posts.
 
 				// Save Media Posts
 				for _, m := range page.List {
-					if err := OFDL.Data.SaveMediaPost(m); err != nil {
+					postId, err := OFDL.Ent.Post.Create().
+						SetID(m.ID).
+						SetSubscriptionID(sub.ID).
+						SetText(m.Text).
+						SetPostedAt(m.PostedAt).
+						OnConflict().UpdateNewValues().
+						ID(cmd.Context())
+					if err != nil {
+						return err
+					}
+
+					mc := []*ent.MediaCreate{}
+					for _, v := range m.Media {
+						mc = append(mc, OFDL.Ent.Media.Create().
+							SetID(v.ID).
+							SetPostID(postId).
+							SetType(v.Type).
+							SetFull(v.Full),
+						)
+					}
+
+					if err := OFDL.Ent.Media.CreateBulk(mc...).OnConflict().UpdateNewValues().Exec(cmd.Context()); err != nil {
 						return err
 					}
 					bar.Add(len(m.Media))
@@ -127,19 +159,15 @@ that is scraped. This allows for incremental scraping of media posts.
 					fmt.Println("Skipping already scraped pages")
 					hasMore = false
 				}
-
 			}
 
 			if headMarker != nil {
-				// Update Subscription HeadMarker
-				sub.HeadMarker = *headMarker
-				if err := OFDL.DB.Save(sub).Error; err != nil {
+				if err := sub.Update().SetHeadMarker(*headMarker).Exec(cmd.Context()); err != nil {
 					return err
 				}
 			}
 
 			bar.Close()
-
 		}
 
 		return nil
@@ -156,7 +184,7 @@ database.
 `,
 	Aliases: []string{"msg"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		subs, err := OFDL.Data.GetEnabledSubscriptions()
+		subs, err := OFDL.Ent.Subscription.Query().Where(subscription.EnabledEQ(true)).All(cmd.Context())
 		if err != nil {
 			return err
 		}
@@ -179,9 +207,9 @@ database.
 
 				// Save Messages
 				for _, m := range page.List {
-					if err := OFDL.Data.SaveMessage(sub.ID, m); err != nil {
-						return err
-					}
+					// if err := OFDL.Data.SaveMessage(sub.ID, m); err != nil {
+					// 	return err
+					// }
 					bar.Add(1)
 
 					nextId = &m.ID

@@ -14,17 +14,18 @@ import (
 	"github.com/ofdl/ofdl/ent/media"
 	"github.com/ofdl/ofdl/ent/post"
 	"github.com/ofdl/ofdl/ent/predicate"
+	"github.com/ofdl/ofdl/ent/subscription"
 )
 
 // PostQuery is the builder for querying Post entities.
 type PostQuery struct {
 	config
-	ctx        *QueryContext
-	order      []post.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Post
-	withMedias *MediaQuery
-	withFKs    bool
+	ctx              *QueryContext
+	order            []post.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.Post
+	withMedias       *MediaQuery
+	withSubscription *SubscriptionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +77,28 @@ func (pq *PostQuery) QueryMedias() *MediaQuery {
 			sqlgraph.From(post.Table, post.FieldID, selector),
 			sqlgraph.To(media.Table, media.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, post.MediasTable, post.MediasColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySubscription chains the current query on the "subscription" edge.
+func (pq *PostQuery) QuerySubscription() *SubscriptionQuery {
+	query := (&SubscriptionClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, selector),
+			sqlgraph.To(subscription.Table, subscription.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, post.SubscriptionTable, post.SubscriptionColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -270,12 +293,13 @@ func (pq *PostQuery) Clone() *PostQuery {
 		return nil
 	}
 	return &PostQuery{
-		config:     pq.config,
-		ctx:        pq.ctx.Clone(),
-		order:      append([]post.OrderOption{}, pq.order...),
-		inters:     append([]Interceptor{}, pq.inters...),
-		predicates: append([]predicate.Post{}, pq.predicates...),
-		withMedias: pq.withMedias.Clone(),
+		config:           pq.config,
+		ctx:              pq.ctx.Clone(),
+		order:            append([]post.OrderOption{}, pq.order...),
+		inters:           append([]Interceptor{}, pq.inters...),
+		predicates:       append([]predicate.Post{}, pq.predicates...),
+		withMedias:       pq.withMedias.Clone(),
+		withSubscription: pq.withSubscription.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
@@ -290,6 +314,17 @@ func (pq *PostQuery) WithMedias(opts ...func(*MediaQuery)) *PostQuery {
 		opt(query)
 	}
 	pq.withMedias = query
+	return pq
+}
+
+// WithSubscription tells the query-builder to eager-load the nodes that are connected to
+// the "subscription" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PostQuery) WithSubscription(opts ...func(*SubscriptionQuery)) *PostQuery {
+	query := (&SubscriptionClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withSubscription = query
 	return pq
 }
 
@@ -370,15 +405,12 @@ func (pq *PostQuery) prepareQuery(ctx context.Context) error {
 func (pq *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, error) {
 	var (
 		nodes       = []*Post{}
-		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			pq.withMedias != nil,
+			pq.withSubscription != nil,
 		}
 	)
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, post.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Post).scanValues(nil, columns)
 	}
@@ -404,6 +436,12 @@ func (pq *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, e
 			return nil, err
 		}
 	}
+	if query := pq.withSubscription; query != nil {
+		if err := pq.loadSubscription(ctx, query, nodes, nil,
+			func(n *Post, e *Subscription) { n.Edges.Subscription = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -417,7 +455,9 @@ func (pq *PostQuery) loadMedias(ctx context.Context, query *MediaQuery, nodes []
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(media.FieldPostID)
+	}
 	query.Where(predicate.Media(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(post.MediasColumn), fks...))
 	}))
@@ -426,15 +466,41 @@ func (pq *PostQuery) loadMedias(ctx context.Context, query *MediaQuery, nodes []
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.post_id
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "post_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.PostID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "post_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "post_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (pq *PostQuery) loadSubscription(ctx context.Context, query *SubscriptionQuery, nodes []*Post, init func(*Post), assign func(*Post, *Subscription)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Post)
+	for i := range nodes {
+		fk := nodes[i].SubscriptionID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(subscription.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "subscription_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
@@ -463,6 +529,9 @@ func (pq *PostQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != post.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if pq.withSubscription != nil {
+			_spec.Node.AddColumnOnce(post.FieldSubscriptionID)
 		}
 	}
 	if ps := pq.predicates; len(ps) > 0 {

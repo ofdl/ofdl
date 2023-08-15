@@ -23,7 +23,7 @@ func (Message) Fields() []ent.Field {
 // Edges of the Message.
 func (Message) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("message_media", MessageMedia.Type).
-			StorageKey(edge.Column("message_id")),
+		edge.To("media", MessageMedia.Type),
+		edge.From("subscription", Subscription.Type).Ref("messages").Unique().Field("subscription_id").Required(),
 	}
 }

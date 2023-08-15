@@ -88,26 +88,6 @@ func SubscriptionIDNotIn(vs ...int) predicate.Message {
 	return predicate.Message(sql.FieldNotIn(FieldSubscriptionID, vs...))
 }
 
-// SubscriptionIDGT applies the GT predicate on the "subscription_id" field.
-func SubscriptionIDGT(v int) predicate.Message {
-	return predicate.Message(sql.FieldGT(FieldSubscriptionID, v))
-}
-
-// SubscriptionIDGTE applies the GTE predicate on the "subscription_id" field.
-func SubscriptionIDGTE(v int) predicate.Message {
-	return predicate.Message(sql.FieldGTE(FieldSubscriptionID, v))
-}
-
-// SubscriptionIDLT applies the LT predicate on the "subscription_id" field.
-func SubscriptionIDLT(v int) predicate.Message {
-	return predicate.Message(sql.FieldLT(FieldSubscriptionID, v))
-}
-
-// SubscriptionIDLTE applies the LTE predicate on the "subscription_id" field.
-func SubscriptionIDLTE(v int) predicate.Message {
-	return predicate.Message(sql.FieldLTE(FieldSubscriptionID, v))
-}
-
 // TextEQ applies the EQ predicate on the "text" field.
 func TextEQ(v string) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldText, v))
@@ -238,21 +218,44 @@ func PostedAtContainsFold(v string) predicate.Message {
 	return predicate.Message(sql.FieldContainsFold(FieldPostedAt, v))
 }
 
-// HasMessageMedia applies the HasEdge predicate on the "message_media" edge.
-func HasMessageMedia() predicate.Message {
+// HasMedia applies the HasEdge predicate on the "media" edge.
+func HasMedia() predicate.Message {
 	return predicate.Message(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, MessageMediaTable, MessageMediaColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, MediaTable, MediaColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasMessageMediaWith applies the HasEdge predicate on the "message_media" edge with a given conditions (other predicates).
-func HasMessageMediaWith(preds ...predicate.MessageMedia) predicate.Message {
+// HasMediaWith applies the HasEdge predicate on the "media" edge with a given conditions (other predicates).
+func HasMediaWith(preds ...predicate.MessageMedia) predicate.Message {
 	return predicate.Message(func(s *sql.Selector) {
-		step := newMessageMediaStep()
+		step := newMediaStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasSubscription applies the HasEdge predicate on the "subscription" edge.
+func HasSubscription() predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, SubscriptionTable, SubscriptionColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSubscriptionWith applies the HasEdge predicate on the "subscription" edge with a given conditions (other predicates).
+func HasSubscriptionWith(preds ...predicate.Subscription) predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := newSubscriptionStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

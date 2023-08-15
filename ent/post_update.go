@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -13,6 +14,7 @@ import (
 	"github.com/ofdl/ofdl/ent/media"
 	"github.com/ofdl/ofdl/ent/post"
 	"github.com/ofdl/ofdl/ent/predicate"
+	"github.com/ofdl/ofdl/ent/subscription"
 )
 
 // PostUpdate is the builder for updating Post entities.
@@ -30,14 +32,7 @@ func (pu *PostUpdate) Where(ps ...predicate.Post) *PostUpdate {
 
 // SetSubscriptionID sets the "subscription_id" field.
 func (pu *PostUpdate) SetSubscriptionID(i int) *PostUpdate {
-	pu.mutation.ResetSubscriptionID()
 	pu.mutation.SetSubscriptionID(i)
-	return pu
-}
-
-// AddSubscriptionID adds i to the "subscription_id" field.
-func (pu *PostUpdate) AddSubscriptionID(i int) *PostUpdate {
-	pu.mutation.AddSubscriptionID(i)
 	return pu
 }
 
@@ -50,6 +45,26 @@ func (pu *PostUpdate) SetText(s string) *PostUpdate {
 // SetPostedAt sets the "posted_at" field.
 func (pu *PostUpdate) SetPostedAt(s string) *PostUpdate {
 	pu.mutation.SetPostedAt(s)
+	return pu
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (pu *PostUpdate) SetCreatedAt(t time.Time) *PostUpdate {
+	pu.mutation.SetCreatedAt(t)
+	return pu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableCreatedAt(t *time.Time) *PostUpdate {
+	if t != nil {
+		pu.SetCreatedAt(*t)
+	}
+	return pu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (pu *PostUpdate) SetUpdatedAt(t time.Time) *PostUpdate {
+	pu.mutation.SetUpdatedAt(t)
 	return pu
 }
 
@@ -66,6 +81,11 @@ func (pu *PostUpdate) AddMedias(m ...*Media) *PostUpdate {
 		ids[i] = m[i].ID
 	}
 	return pu.AddMediaIDs(ids...)
+}
+
+// SetSubscription sets the "subscription" edge to the Subscription entity.
+func (pu *PostUpdate) SetSubscription(s *Subscription) *PostUpdate {
+	return pu.SetSubscriptionID(s.ID)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -94,8 +114,15 @@ func (pu *PostUpdate) RemoveMedias(m ...*Media) *PostUpdate {
 	return pu.RemoveMediaIDs(ids...)
 }
 
+// ClearSubscription clears the "subscription" edge to the Subscription entity.
+func (pu *PostUpdate) ClearSubscription() *PostUpdate {
+	pu.mutation.ClearSubscription()
+	return pu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (pu *PostUpdate) Save(ctx context.Context) (int, error) {
+	pu.defaults()
 	return withHooks(ctx, pu.sqlSave, pu.mutation, pu.hooks)
 }
 
@@ -121,7 +148,26 @@ func (pu *PostUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (pu *PostUpdate) defaults() {
+	if _, ok := pu.mutation.UpdatedAt(); !ok {
+		v := post.UpdateDefaultUpdatedAt()
+		pu.mutation.SetUpdatedAt(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (pu *PostUpdate) check() error {
+	if _, ok := pu.mutation.SubscriptionID(); pu.mutation.SubscriptionCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Post.subscription"`)
+	}
+	return nil
+}
+
 func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := pu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(post.Table, post.Columns, sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt))
 	if ps := pu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -130,17 +176,17 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := pu.mutation.SubscriptionID(); ok {
-		_spec.SetField(post.FieldSubscriptionID, field.TypeInt, value)
-	}
-	if value, ok := pu.mutation.AddedSubscriptionID(); ok {
-		_spec.AddField(post.FieldSubscriptionID, field.TypeInt, value)
-	}
 	if value, ok := pu.mutation.Text(); ok {
 		_spec.SetField(post.FieldText, field.TypeString, value)
 	}
 	if value, ok := pu.mutation.PostedAt(); ok {
 		_spec.SetField(post.FieldPostedAt, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.CreatedAt(); ok {
+		_spec.SetField(post.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := pu.mutation.UpdatedAt(); ok {
+		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if pu.mutation.MediasCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -187,6 +233,35 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if pu.mutation.SubscriptionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.SubscriptionTable,
+			Columns: []string{post.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscription.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.SubscriptionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.SubscriptionTable,
+			Columns: []string{post.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscription.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, pu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{post.Label}
@@ -209,14 +284,7 @@ type PostUpdateOne struct {
 
 // SetSubscriptionID sets the "subscription_id" field.
 func (puo *PostUpdateOne) SetSubscriptionID(i int) *PostUpdateOne {
-	puo.mutation.ResetSubscriptionID()
 	puo.mutation.SetSubscriptionID(i)
-	return puo
-}
-
-// AddSubscriptionID adds i to the "subscription_id" field.
-func (puo *PostUpdateOne) AddSubscriptionID(i int) *PostUpdateOne {
-	puo.mutation.AddSubscriptionID(i)
 	return puo
 }
 
@@ -229,6 +297,26 @@ func (puo *PostUpdateOne) SetText(s string) *PostUpdateOne {
 // SetPostedAt sets the "posted_at" field.
 func (puo *PostUpdateOne) SetPostedAt(s string) *PostUpdateOne {
 	puo.mutation.SetPostedAt(s)
+	return puo
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (puo *PostUpdateOne) SetCreatedAt(t time.Time) *PostUpdateOne {
+	puo.mutation.SetCreatedAt(t)
+	return puo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableCreatedAt(t *time.Time) *PostUpdateOne {
+	if t != nil {
+		puo.SetCreatedAt(*t)
+	}
+	return puo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (puo *PostUpdateOne) SetUpdatedAt(t time.Time) *PostUpdateOne {
+	puo.mutation.SetUpdatedAt(t)
 	return puo
 }
 
@@ -245,6 +333,11 @@ func (puo *PostUpdateOne) AddMedias(m ...*Media) *PostUpdateOne {
 		ids[i] = m[i].ID
 	}
 	return puo.AddMediaIDs(ids...)
+}
+
+// SetSubscription sets the "subscription" edge to the Subscription entity.
+func (puo *PostUpdateOne) SetSubscription(s *Subscription) *PostUpdateOne {
+	return puo.SetSubscriptionID(s.ID)
 }
 
 // Mutation returns the PostMutation object of the builder.
@@ -273,6 +366,12 @@ func (puo *PostUpdateOne) RemoveMedias(m ...*Media) *PostUpdateOne {
 	return puo.RemoveMediaIDs(ids...)
 }
 
+// ClearSubscription clears the "subscription" edge to the Subscription entity.
+func (puo *PostUpdateOne) ClearSubscription() *PostUpdateOne {
+	puo.mutation.ClearSubscription()
+	return puo
+}
+
 // Where appends a list predicates to the PostUpdate builder.
 func (puo *PostUpdateOne) Where(ps ...predicate.Post) *PostUpdateOne {
 	puo.mutation.Where(ps...)
@@ -288,6 +387,7 @@ func (puo *PostUpdateOne) Select(field string, fields ...string) *PostUpdateOne 
 
 // Save executes the query and returns the updated Post entity.
 func (puo *PostUpdateOne) Save(ctx context.Context) (*Post, error) {
+	puo.defaults()
 	return withHooks(ctx, puo.sqlSave, puo.mutation, puo.hooks)
 }
 
@@ -313,7 +413,26 @@ func (puo *PostUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (puo *PostUpdateOne) defaults() {
+	if _, ok := puo.mutation.UpdatedAt(); !ok {
+		v := post.UpdateDefaultUpdatedAt()
+		puo.mutation.SetUpdatedAt(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (puo *PostUpdateOne) check() error {
+	if _, ok := puo.mutation.SubscriptionID(); puo.mutation.SubscriptionCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Post.subscription"`)
+	}
+	return nil
+}
+
 func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) {
+	if err := puo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(post.Table, post.Columns, sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt))
 	id, ok := puo.mutation.ID()
 	if !ok {
@@ -339,17 +458,17 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 			}
 		}
 	}
-	if value, ok := puo.mutation.SubscriptionID(); ok {
-		_spec.SetField(post.FieldSubscriptionID, field.TypeInt, value)
-	}
-	if value, ok := puo.mutation.AddedSubscriptionID(); ok {
-		_spec.AddField(post.FieldSubscriptionID, field.TypeInt, value)
-	}
 	if value, ok := puo.mutation.Text(); ok {
 		_spec.SetField(post.FieldText, field.TypeString, value)
 	}
 	if value, ok := puo.mutation.PostedAt(); ok {
 		_spec.SetField(post.FieldPostedAt, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.CreatedAt(); ok {
+		_spec.SetField(post.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := puo.mutation.UpdatedAt(); ok {
+		_spec.SetField(post.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if puo.mutation.MediasCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -389,6 +508,35 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(media.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.SubscriptionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.SubscriptionTable,
+			Columns: []string{post.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscription.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.SubscriptionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   post.SubscriptionTable,
+			Columns: []string{post.SubscriptionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscription.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

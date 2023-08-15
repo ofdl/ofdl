@@ -33,6 +33,10 @@ type Subscription struct {
 	OrganizedAt time.Time `json:"organized_at,omitempty"`
 	// Enabled holds the value of the "enabled" field.
 	Enabled bool `json:"enabled,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SubscriptionQuery when eager-loading is set.
 	Edges        SubscriptionEdges `json:"edges"`
@@ -43,9 +47,11 @@ type Subscription struct {
 type SubscriptionEdges struct {
 	// Posts holds the value of the posts edge.
 	Posts []*Post `json:"posts,omitempty"`
+	// Messages holds the value of the messages edge.
+	Messages []*Message `json:"messages,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // PostsOrErr returns the Posts value or an error if the edge
@@ -55,6 +61,15 @@ func (e SubscriptionEdges) PostsOrErr() ([]*Post, error) {
 		return e.Posts, nil
 	}
 	return nil, &NotLoadedError{edge: "posts"}
+}
+
+// MessagesOrErr returns the Messages value or an error if the edge
+// was not loaded in eager-loading.
+func (e SubscriptionEdges) MessagesOrErr() ([]*Message, error) {
+	if e.loadedTypes[1] {
+		return e.Messages, nil
+	}
+	return nil, &NotLoadedError{edge: "messages"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -68,7 +83,7 @@ func (*Subscription) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case subscription.FieldAvatar, subscription.FieldHeader, subscription.FieldName, subscription.FieldUsername, subscription.FieldHeadMarker, subscription.FieldStashID:
 			values[i] = new(sql.NullString)
-		case subscription.FieldOrganizedAt:
+		case subscription.FieldOrganizedAt, subscription.FieldCreatedAt, subscription.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -139,6 +154,18 @@ func (s *Subscription) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.Enabled = value.Bool
 			}
+		case subscription.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				s.CreatedAt = value.Time
+			}
+		case subscription.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				s.UpdatedAt = value.Time
+			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
 		}
@@ -155,6 +182,11 @@ func (s *Subscription) Value(name string) (ent.Value, error) {
 // QueryPosts queries the "posts" edge of the Subscription entity.
 func (s *Subscription) QueryPosts() *PostQuery {
 	return NewSubscriptionClient(s.config).QueryPosts(s)
+}
+
+// QueryMessages queries the "messages" edge of the Subscription entity.
+func (s *Subscription) QueryMessages() *MessageQuery {
+	return NewSubscriptionClient(s.config).QueryMessages(s)
 }
 
 // Update returns a builder for updating this Subscription.
@@ -203,6 +235,12 @@ func (s *Subscription) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("enabled=")
 	builder.WriteString(fmt.Sprintf("%v", s.Enabled))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(s.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(s.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

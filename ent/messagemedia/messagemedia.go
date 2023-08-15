@@ -4,6 +4,7 @@ package messagemedia
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -23,8 +24,17 @@ const (
 	FieldStashID = "stash_id"
 	// FieldOrganizedAt holds the string denoting the organized_at field in the database.
 	FieldOrganizedAt = "organized_at"
+	// EdgeMessage holds the string denoting the message edge name in mutations.
+	EdgeMessage = "message"
 	// Table holds the table name of the messagemedia in the database.
 	Table = "message_media"
+	// MessageTable is the table that holds the message relation/edge.
+	MessageTable = "message_media"
+	// MessageInverseTable is the table name for the Message entity.
+	// It exists in this package in order to avoid circular dependency with the "message" package.
+	MessageInverseTable = "messages"
+	// MessageColumn is the table column denoting the message relation/edge.
+	MessageColumn = "message_id"
 )
 
 // Columns holds all SQL columns for messagemedia fields.
@@ -38,21 +48,10 @@ var Columns = []string{
 	FieldOrganizedAt,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "message_media"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"message_id",
-}
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -95,4 +94,18 @@ func ByStashID(opts ...sql.OrderTermOption) OrderOption {
 // ByOrganizedAt orders the results by the organized_at field.
 func ByOrganizedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOrganizedAt, opts...).ToFunc()
+}
+
+// ByMessageField orders the results by message field.
+func ByMessageField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMessageStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newMessageStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MessageInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, MessageTable, MessageColumn),
+	)
 }

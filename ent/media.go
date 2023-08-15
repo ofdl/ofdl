@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/ofdl/ofdl/ent/media"
+	"github.com/ofdl/ofdl/ent/post"
 )
 
 // Media is the model entity for the Media schema.
@@ -28,9 +29,37 @@ type Media struct {
 	// StashID holds the value of the "stash_id" field.
 	StashID string `json:"stash_id,omitempty"`
 	// OrganizedAt holds the value of the "organized_at" field.
-	OrganizedAt  time.Time `json:"organized_at,omitempty"`
-	post_id      *int
+	OrganizedAt time.Time `json:"organized_at,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the MediaQuery when eager-loading is set.
+	Edges        MediaEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// MediaEdges holds the relations/edges for other nodes in the graph.
+type MediaEdges struct {
+	// Post holds the value of the post edge.
+	Post *Post `json:"post,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// PostOrErr returns the Post value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MediaEdges) PostOrErr() (*Post, error) {
+	if e.loadedTypes[0] {
+		if e.Post == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: post.Label}
+		}
+		return e.Post, nil
+	}
+	return nil, &NotLoadedError{edge: "post"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -42,10 +71,8 @@ func (*Media) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case media.FieldType, media.FieldFull, media.FieldStashID:
 			values[i] = new(sql.NullString)
-		case media.FieldDownloadedAt, media.FieldOrganizedAt:
+		case media.FieldDownloadedAt, media.FieldOrganizedAt, media.FieldCreatedAt, media.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case media.ForeignKeys[0]: // post_id
-			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -103,12 +130,17 @@ func (m *Media) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				m.OrganizedAt = value.Time
 			}
-		case media.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field post_id", value)
+		case media.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				m.post_id = new(int)
-				*m.post_id = int(value.Int64)
+				m.CreatedAt = value.Time
+			}
+		case media.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				m.UpdatedAt = value.Time
 			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
@@ -121,6 +153,11 @@ func (m *Media) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (m *Media) Value(name string) (ent.Value, error) {
 	return m.selectValues.Get(name)
+}
+
+// QueryPost queries the "post" edge of the Media entity.
+func (m *Media) QueryPost() *PostQuery {
+	return NewMediaClient(m.config).QueryPost(m)
 }
 
 // Update returns a builder for updating this Media.
@@ -163,6 +200,12 @@ func (m *Media) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("organized_at=")
 	builder.WriteString(m.OrganizedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

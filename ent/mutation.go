@@ -41,14 +41,16 @@ type MediaMutation struct {
 	op            Op
 	typ           string
 	id            *int
-	post_id       *int
-	addpost_id    *int
 	_type         *string
 	full          *string
 	downloaded_at *time.Time
 	stash_id      *string
 	organized_at  *time.Time
+	created_at    *time.Time
+	updated_at    *time.Time
 	clearedFields map[string]struct{}
+	post          *int
+	clearedpost   bool
 	done          bool
 	oldValue      func(context.Context) (*Media, error)
 	predicates    []predicate.Media
@@ -124,6 +126,12 @@ func (m MediaMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Media entities.
+func (m *MediaMutation) SetID(id int) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
 func (m *MediaMutation) ID() (id int, exists bool) {
@@ -154,13 +162,12 @@ func (m *MediaMutation) IDs(ctx context.Context) ([]int, error) {
 
 // SetPostID sets the "post_id" field.
 func (m *MediaMutation) SetPostID(i int) {
-	m.post_id = &i
-	m.addpost_id = nil
+	m.post = &i
 }
 
 // PostID returns the value of the "post_id" field in the mutation.
 func (m *MediaMutation) PostID() (r int, exists bool) {
-	v := m.post_id
+	v := m.post
 	if v == nil {
 		return
 	}
@@ -184,28 +191,9 @@ func (m *MediaMutation) OldPostID(ctx context.Context) (v int, err error) {
 	return oldValue.PostID, nil
 }
 
-// AddPostID adds i to the "post_id" field.
-func (m *MediaMutation) AddPostID(i int) {
-	if m.addpost_id != nil {
-		*m.addpost_id += i
-	} else {
-		m.addpost_id = &i
-	}
-}
-
-// AddedPostID returns the value that was added to the "post_id" field in this mutation.
-func (m *MediaMutation) AddedPostID() (r int, exists bool) {
-	v := m.addpost_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
 // ResetPostID resets all changes to the "post_id" field.
 func (m *MediaMutation) ResetPostID() {
-	m.post_id = nil
-	m.addpost_id = nil
+	m.post = nil
 }
 
 // SetType sets the "type" field.
@@ -360,9 +348,22 @@ func (m *MediaMutation) OldStashID(ctx context.Context) (v string, err error) {
 	return oldValue.StashID, nil
 }
 
+// ClearStashID clears the value of the "stash_id" field.
+func (m *MediaMutation) ClearStashID() {
+	m.stash_id = nil
+	m.clearedFields[media.FieldStashID] = struct{}{}
+}
+
+// StashIDCleared returns if the "stash_id" field was cleared in this mutation.
+func (m *MediaMutation) StashIDCleared() bool {
+	_, ok := m.clearedFields[media.FieldStashID]
+	return ok
+}
+
 // ResetStashID resets all changes to the "stash_id" field.
 func (m *MediaMutation) ResetStashID() {
 	m.stash_id = nil
+	delete(m.clearedFields, media.FieldStashID)
 }
 
 // SetOrganizedAt sets the "organized_at" field.
@@ -414,6 +415,104 @@ func (m *MediaMutation) ResetOrganizedAt() {
 	delete(m.clearedFields, media.FieldOrganizedAt)
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (m *MediaMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *MediaMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Media entity.
+// If the Media object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MediaMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *MediaMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *MediaMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *MediaMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Media entity.
+// If the Media object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MediaMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *MediaMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearPost clears the "post" edge to the Post entity.
+func (m *MediaMutation) ClearPost() {
+	m.clearedpost = true
+}
+
+// PostCleared reports if the "post" edge to the Post entity was cleared.
+func (m *MediaMutation) PostCleared() bool {
+	return m.clearedpost
+}
+
+// PostIDs returns the "post" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PostID instead. It exists only for internal usage by the builders.
+func (m *MediaMutation) PostIDs() (ids []int) {
+	if id := m.post; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetPost resets all changes to the "post" edge.
+func (m *MediaMutation) ResetPost() {
+	m.post = nil
+	m.clearedpost = false
+}
+
 // Where appends a list predicates to the MediaMutation builder.
 func (m *MediaMutation) Where(ps ...predicate.Media) {
 	m.predicates = append(m.predicates, ps...)
@@ -448,8 +547,8 @@ func (m *MediaMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MediaMutation) Fields() []string {
-	fields := make([]string, 0, 6)
-	if m.post_id != nil {
+	fields := make([]string, 0, 8)
+	if m.post != nil {
 		fields = append(fields, media.FieldPostID)
 	}
 	if m._type != nil {
@@ -466,6 +565,12 @@ func (m *MediaMutation) Fields() []string {
 	}
 	if m.organized_at != nil {
 		fields = append(fields, media.FieldOrganizedAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, media.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, media.FieldUpdatedAt)
 	}
 	return fields
 }
@@ -487,6 +592,10 @@ func (m *MediaMutation) Field(name string) (ent.Value, bool) {
 		return m.StashID()
 	case media.FieldOrganizedAt:
 		return m.OrganizedAt()
+	case media.FieldCreatedAt:
+		return m.CreatedAt()
+	case media.FieldUpdatedAt:
+		return m.UpdatedAt()
 	}
 	return nil, false
 }
@@ -508,6 +617,10 @@ func (m *MediaMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldStashID(ctx)
 	case media.FieldOrganizedAt:
 		return m.OldOrganizedAt(ctx)
+	case media.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case media.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Media field %s", name)
 }
@@ -559,6 +672,20 @@ func (m *MediaMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetOrganizedAt(v)
 		return nil
+	case media.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case media.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Media field %s", name)
 }
@@ -567,9 +694,6 @@ func (m *MediaMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *MediaMutation) AddedFields() []string {
 	var fields []string
-	if m.addpost_id != nil {
-		fields = append(fields, media.FieldPostID)
-	}
 	return fields
 }
 
@@ -578,8 +702,6 @@ func (m *MediaMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *MediaMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case media.FieldPostID:
-		return m.AddedPostID()
 	}
 	return nil, false
 }
@@ -589,13 +711,6 @@ func (m *MediaMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MediaMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case media.FieldPostID:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddPostID(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Media numeric field %s", name)
 }
@@ -606,6 +721,9 @@ func (m *MediaMutation) ClearedFields() []string {
 	var fields []string
 	if m.FieldCleared(media.FieldDownloadedAt) {
 		fields = append(fields, media.FieldDownloadedAt)
+	}
+	if m.FieldCleared(media.FieldStashID) {
+		fields = append(fields, media.FieldStashID)
 	}
 	if m.FieldCleared(media.FieldOrganizedAt) {
 		fields = append(fields, media.FieldOrganizedAt)
@@ -626,6 +744,9 @@ func (m *MediaMutation) ClearField(name string) error {
 	switch name {
 	case media.FieldDownloadedAt:
 		m.ClearDownloadedAt()
+		return nil
+	case media.FieldStashID:
+		m.ClearStashID()
 		return nil
 	case media.FieldOrganizedAt:
 		m.ClearOrganizedAt()
@@ -656,25 +777,40 @@ func (m *MediaMutation) ResetField(name string) error {
 	case media.FieldOrganizedAt:
 		m.ResetOrganizedAt()
 		return nil
+	case media.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case media.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
 	}
 	return fmt.Errorf("unknown Media field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *MediaMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.post != nil {
+		edges = append(edges, media.EdgePost)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *MediaMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case media.EdgePost:
+		if id := m.post; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MediaMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -686,45 +822,62 @@ func (m *MediaMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *MediaMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedpost {
+		edges = append(edges, media.EdgePost)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *MediaMutation) EdgeCleared(name string) bool {
+	switch name {
+	case media.EdgePost:
+		return m.clearedpost
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *MediaMutation) ClearEdge(name string) error {
+	switch name {
+	case media.EdgePost:
+		m.ClearPost()
+		return nil
+	}
 	return fmt.Errorf("unknown Media unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *MediaMutation) ResetEdge(name string) error {
+	switch name {
+	case media.EdgePost:
+		m.ResetPost()
+		return nil
+	}
 	return fmt.Errorf("unknown Media edge %s", name)
 }
 
 // MessageMutation represents an operation that mutates the Message nodes in the graph.
 type MessageMutation struct {
 	config
-	op                   Op
-	typ                  string
-	id                   *int
-	subscription_id      *int
-	addsubscription_id   *int
-	text                 *string
-	posted_at            *string
-	clearedFields        map[string]struct{}
-	message_media        map[int]struct{}
-	removedmessage_media map[int]struct{}
-	clearedmessage_media bool
-	done                 bool
-	oldValue             func(context.Context) (*Message, error)
-	predicates           []predicate.Message
+	op                  Op
+	typ                 string
+	id                  *int
+	text                *string
+	posted_at           *string
+	clearedFields       map[string]struct{}
+	media               map[int]struct{}
+	removedmedia        map[int]struct{}
+	clearedmedia        bool
+	subscription        *int
+	clearedsubscription bool
+	done                bool
+	oldValue            func(context.Context) (*Message, error)
+	predicates          []predicate.Message
 }
 
 var _ ent.Mutation = (*MessageMutation)(nil)
@@ -827,13 +980,12 @@ func (m *MessageMutation) IDs(ctx context.Context) ([]int, error) {
 
 // SetSubscriptionID sets the "subscription_id" field.
 func (m *MessageMutation) SetSubscriptionID(i int) {
-	m.subscription_id = &i
-	m.addsubscription_id = nil
+	m.subscription = &i
 }
 
 // SubscriptionID returns the value of the "subscription_id" field in the mutation.
 func (m *MessageMutation) SubscriptionID() (r int, exists bool) {
-	v := m.subscription_id
+	v := m.subscription
 	if v == nil {
 		return
 	}
@@ -857,28 +1009,9 @@ func (m *MessageMutation) OldSubscriptionID(ctx context.Context) (v int, err err
 	return oldValue.SubscriptionID, nil
 }
 
-// AddSubscriptionID adds i to the "subscription_id" field.
-func (m *MessageMutation) AddSubscriptionID(i int) {
-	if m.addsubscription_id != nil {
-		*m.addsubscription_id += i
-	} else {
-		m.addsubscription_id = &i
-	}
-}
-
-// AddedSubscriptionID returns the value that was added to the "subscription_id" field in this mutation.
-func (m *MessageMutation) AddedSubscriptionID() (r int, exists bool) {
-	v := m.addsubscription_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
 // ResetSubscriptionID resets all changes to the "subscription_id" field.
 func (m *MessageMutation) ResetSubscriptionID() {
-	m.subscription_id = nil
-	m.addsubscription_id = nil
+	m.subscription = nil
 }
 
 // SetText sets the "text" field.
@@ -953,58 +1086,84 @@ func (m *MessageMutation) ResetPostedAt() {
 	m.posted_at = nil
 }
 
-// AddMessageMediumIDs adds the "message_media" edge to the MessageMedia entity by ids.
-func (m *MessageMutation) AddMessageMediumIDs(ids ...int) {
-	if m.message_media == nil {
-		m.message_media = make(map[int]struct{})
+// AddMediumIDs adds the "media" edge to the MessageMedia entity by ids.
+func (m *MessageMutation) AddMediumIDs(ids ...int) {
+	if m.media == nil {
+		m.media = make(map[int]struct{})
 	}
 	for i := range ids {
-		m.message_media[ids[i]] = struct{}{}
+		m.media[ids[i]] = struct{}{}
 	}
 }
 
-// ClearMessageMedia clears the "message_media" edge to the MessageMedia entity.
-func (m *MessageMutation) ClearMessageMedia() {
-	m.clearedmessage_media = true
+// ClearMedia clears the "media" edge to the MessageMedia entity.
+func (m *MessageMutation) ClearMedia() {
+	m.clearedmedia = true
 }
 
-// MessageMediaCleared reports if the "message_media" edge to the MessageMedia entity was cleared.
-func (m *MessageMutation) MessageMediaCleared() bool {
-	return m.clearedmessage_media
+// MediaCleared reports if the "media" edge to the MessageMedia entity was cleared.
+func (m *MessageMutation) MediaCleared() bool {
+	return m.clearedmedia
 }
 
-// RemoveMessageMediumIDs removes the "message_media" edge to the MessageMedia entity by IDs.
-func (m *MessageMutation) RemoveMessageMediumIDs(ids ...int) {
-	if m.removedmessage_media == nil {
-		m.removedmessage_media = make(map[int]struct{})
+// RemoveMediumIDs removes the "media" edge to the MessageMedia entity by IDs.
+func (m *MessageMutation) RemoveMediumIDs(ids ...int) {
+	if m.removedmedia == nil {
+		m.removedmedia = make(map[int]struct{})
 	}
 	for i := range ids {
-		delete(m.message_media, ids[i])
-		m.removedmessage_media[ids[i]] = struct{}{}
+		delete(m.media, ids[i])
+		m.removedmedia[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedMessageMedia returns the removed IDs of the "message_media" edge to the MessageMedia entity.
-func (m *MessageMutation) RemovedMessageMediaIDs() (ids []int) {
-	for id := range m.removedmessage_media {
+// RemovedMedia returns the removed IDs of the "media" edge to the MessageMedia entity.
+func (m *MessageMutation) RemovedMediaIDs() (ids []int) {
+	for id := range m.removedmedia {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// MessageMediaIDs returns the "message_media" edge IDs in the mutation.
-func (m *MessageMutation) MessageMediaIDs() (ids []int) {
-	for id := range m.message_media {
+// MediaIDs returns the "media" edge IDs in the mutation.
+func (m *MessageMutation) MediaIDs() (ids []int) {
+	for id := range m.media {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetMessageMedia resets all changes to the "message_media" edge.
-func (m *MessageMutation) ResetMessageMedia() {
-	m.message_media = nil
-	m.clearedmessage_media = false
-	m.removedmessage_media = nil
+// ResetMedia resets all changes to the "media" edge.
+func (m *MessageMutation) ResetMedia() {
+	m.media = nil
+	m.clearedmedia = false
+	m.removedmedia = nil
+}
+
+// ClearSubscription clears the "subscription" edge to the Subscription entity.
+func (m *MessageMutation) ClearSubscription() {
+	m.clearedsubscription = true
+}
+
+// SubscriptionCleared reports if the "subscription" edge to the Subscription entity was cleared.
+func (m *MessageMutation) SubscriptionCleared() bool {
+	return m.clearedsubscription
+}
+
+// SubscriptionIDs returns the "subscription" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SubscriptionID instead. It exists only for internal usage by the builders.
+func (m *MessageMutation) SubscriptionIDs() (ids []int) {
+	if id := m.subscription; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSubscription resets all changes to the "subscription" edge.
+func (m *MessageMutation) ResetSubscription() {
+	m.subscription = nil
+	m.clearedsubscription = false
 }
 
 // Where appends a list predicates to the MessageMutation builder.
@@ -1042,7 +1201,7 @@ func (m *MessageMutation) Type() string {
 // AddedFields().
 func (m *MessageMutation) Fields() []string {
 	fields := make([]string, 0, 3)
-	if m.subscription_id != nil {
+	if m.subscription != nil {
 		fields = append(fields, message.FieldSubscriptionID)
 	}
 	if m.text != nil {
@@ -1118,9 +1277,6 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *MessageMutation) AddedFields() []string {
 	var fields []string
-	if m.addsubscription_id != nil {
-		fields = append(fields, message.FieldSubscriptionID)
-	}
 	return fields
 }
 
@@ -1129,8 +1285,6 @@ func (m *MessageMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *MessageMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case message.FieldSubscriptionID:
-		return m.AddedSubscriptionID()
 	}
 	return nil, false
 }
@@ -1140,13 +1294,6 @@ func (m *MessageMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MessageMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case message.FieldSubscriptionID:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddSubscriptionID(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Message numeric field %s", name)
 }
@@ -1189,9 +1336,12 @@ func (m *MessageMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *MessageMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m.message_media != nil {
-		edges = append(edges, message.EdgeMessageMedia)
+	edges := make([]string, 0, 2)
+	if m.media != nil {
+		edges = append(edges, message.EdgeMedia)
+	}
+	if m.subscription != nil {
+		edges = append(edges, message.EdgeSubscription)
 	}
 	return edges
 }
@@ -1200,21 +1350,25 @@ func (m *MessageMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *MessageMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case message.EdgeMessageMedia:
-		ids := make([]ent.Value, 0, len(m.message_media))
-		for id := range m.message_media {
+	case message.EdgeMedia:
+		ids := make([]ent.Value, 0, len(m.media))
+		for id := range m.media {
 			ids = append(ids, id)
 		}
 		return ids
+	case message.EdgeSubscription:
+		if id := m.subscription; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MessageMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m.removedmessage_media != nil {
-		edges = append(edges, message.EdgeMessageMedia)
+	edges := make([]string, 0, 2)
+	if m.removedmedia != nil {
+		edges = append(edges, message.EdgeMedia)
 	}
 	return edges
 }
@@ -1223,9 +1377,9 @@ func (m *MessageMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *MessageMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case message.EdgeMessageMedia:
-		ids := make([]ent.Value, 0, len(m.removedmessage_media))
-		for id := range m.removedmessage_media {
+	case message.EdgeMedia:
+		ids := make([]ent.Value, 0, len(m.removedmedia))
+		for id := range m.removedmedia {
 			ids = append(ids, id)
 		}
 		return ids
@@ -1235,9 +1389,12 @@ func (m *MessageMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *MessageMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m.clearedmessage_media {
-		edges = append(edges, message.EdgeMessageMedia)
+	edges := make([]string, 0, 2)
+	if m.clearedmedia {
+		edges = append(edges, message.EdgeMedia)
+	}
+	if m.clearedsubscription {
+		edges = append(edges, message.EdgeSubscription)
 	}
 	return edges
 }
@@ -1246,8 +1403,10 @@ func (m *MessageMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *MessageMutation) EdgeCleared(name string) bool {
 	switch name {
-	case message.EdgeMessageMedia:
-		return m.clearedmessage_media
+	case message.EdgeMedia:
+		return m.clearedmedia
+	case message.EdgeSubscription:
+		return m.clearedsubscription
 	}
 	return false
 }
@@ -1256,6 +1415,9 @@ func (m *MessageMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *MessageMutation) ClearEdge(name string) error {
 	switch name {
+	case message.EdgeSubscription:
+		m.ClearSubscription()
+		return nil
 	}
 	return fmt.Errorf("unknown Message unique edge %s", name)
 }
@@ -1264,8 +1426,11 @@ func (m *MessageMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *MessageMutation) ResetEdge(name string) error {
 	switch name {
-	case message.EdgeMessageMedia:
-		m.ResetMessageMedia()
+	case message.EdgeMedia:
+		m.ResetMedia()
+		return nil
+	case message.EdgeSubscription:
+		m.ResetSubscription()
 		return nil
 	}
 	return fmt.Errorf("unknown Message edge %s", name)
@@ -1274,20 +1439,20 @@ func (m *MessageMutation) ResetEdge(name string) error {
 // MessageMediaMutation represents an operation that mutates the MessageMedia nodes in the graph.
 type MessageMediaMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	message_id    *int
-	addmessage_id *int
-	_type         *string
-	full          *string
-	downloaded_at *time.Time
-	stash_id      *string
-	organized_at  *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*MessageMedia, error)
-	predicates    []predicate.MessageMedia
+	op             Op
+	typ            string
+	id             *int
+	_type          *string
+	full           *string
+	downloaded_at  *time.Time
+	stash_id       *string
+	organized_at   *time.Time
+	clearedFields  map[string]struct{}
+	message        *int
+	clearedmessage bool
+	done           bool
+	oldValue       func(context.Context) (*MessageMedia, error)
+	predicates     []predicate.MessageMedia
 }
 
 var _ ent.Mutation = (*MessageMediaMutation)(nil)
@@ -1390,13 +1555,12 @@ func (m *MessageMediaMutation) IDs(ctx context.Context) ([]int, error) {
 
 // SetMessageID sets the "message_id" field.
 func (m *MessageMediaMutation) SetMessageID(i int) {
-	m.message_id = &i
-	m.addmessage_id = nil
+	m.message = &i
 }
 
 // MessageID returns the value of the "message_id" field in the mutation.
 func (m *MessageMediaMutation) MessageID() (r int, exists bool) {
-	v := m.message_id
+	v := m.message
 	if v == nil {
 		return
 	}
@@ -1420,28 +1584,9 @@ func (m *MessageMediaMutation) OldMessageID(ctx context.Context) (v int, err err
 	return oldValue.MessageID, nil
 }
 
-// AddMessageID adds i to the "message_id" field.
-func (m *MessageMediaMutation) AddMessageID(i int) {
-	if m.addmessage_id != nil {
-		*m.addmessage_id += i
-	} else {
-		m.addmessage_id = &i
-	}
-}
-
-// AddedMessageID returns the value that was added to the "message_id" field in this mutation.
-func (m *MessageMediaMutation) AddedMessageID() (r int, exists bool) {
-	v := m.addmessage_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
 // ResetMessageID resets all changes to the "message_id" field.
 func (m *MessageMediaMutation) ResetMessageID() {
-	m.message_id = nil
-	m.addmessage_id = nil
+	m.message = nil
 }
 
 // SetType sets the "type" field.
@@ -1650,6 +1795,32 @@ func (m *MessageMediaMutation) ResetOrganizedAt() {
 	delete(m.clearedFields, messagemedia.FieldOrganizedAt)
 }
 
+// ClearMessage clears the "message" edge to the Message entity.
+func (m *MessageMediaMutation) ClearMessage() {
+	m.clearedmessage = true
+}
+
+// MessageCleared reports if the "message" edge to the Message entity was cleared.
+func (m *MessageMediaMutation) MessageCleared() bool {
+	return m.clearedmessage
+}
+
+// MessageIDs returns the "message" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// MessageID instead. It exists only for internal usage by the builders.
+func (m *MessageMediaMutation) MessageIDs() (ids []int) {
+	if id := m.message; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetMessage resets all changes to the "message" edge.
+func (m *MessageMediaMutation) ResetMessage() {
+	m.message = nil
+	m.clearedmessage = false
+}
+
 // Where appends a list predicates to the MessageMediaMutation builder.
 func (m *MessageMediaMutation) Where(ps ...predicate.MessageMedia) {
 	m.predicates = append(m.predicates, ps...)
@@ -1685,7 +1856,7 @@ func (m *MessageMediaMutation) Type() string {
 // AddedFields().
 func (m *MessageMediaMutation) Fields() []string {
 	fields := make([]string, 0, 6)
-	if m.message_id != nil {
+	if m.message != nil {
 		fields = append(fields, messagemedia.FieldMessageID)
 	}
 	if m._type != nil {
@@ -1803,9 +1974,6 @@ func (m *MessageMediaMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *MessageMediaMutation) AddedFields() []string {
 	var fields []string
-	if m.addmessage_id != nil {
-		fields = append(fields, messagemedia.FieldMessageID)
-	}
 	return fields
 }
 
@@ -1814,8 +1982,6 @@ func (m *MessageMediaMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *MessageMediaMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case messagemedia.FieldMessageID:
-		return m.AddedMessageID()
 	}
 	return nil, false
 }
@@ -1825,13 +1991,6 @@ func (m *MessageMediaMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MessageMediaMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case messagemedia.FieldMessageID:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddMessageID(v)
-		return nil
 	}
 	return fmt.Errorf("unknown MessageMedia numeric field %s", name)
 }
@@ -1898,19 +2057,28 @@ func (m *MessageMediaMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *MessageMediaMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.message != nil {
+		edges = append(edges, messagemedia.EdgeMessage)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *MessageMediaMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case messagemedia.EdgeMessage:
+		if id := m.message; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MessageMediaMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -1922,45 +2090,64 @@ func (m *MessageMediaMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *MessageMediaMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedmessage {
+		edges = append(edges, messagemedia.EdgeMessage)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *MessageMediaMutation) EdgeCleared(name string) bool {
+	switch name {
+	case messagemedia.EdgeMessage:
+		return m.clearedmessage
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *MessageMediaMutation) ClearEdge(name string) error {
+	switch name {
+	case messagemedia.EdgeMessage:
+		m.ClearMessage()
+		return nil
+	}
 	return fmt.Errorf("unknown MessageMedia unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *MessageMediaMutation) ResetEdge(name string) error {
+	switch name {
+	case messagemedia.EdgeMessage:
+		m.ResetMessage()
+		return nil
+	}
 	return fmt.Errorf("unknown MessageMedia edge %s", name)
 }
 
 // PostMutation represents an operation that mutates the Post nodes in the graph.
 type PostMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *int
-	subscription_id    *int
-	addsubscription_id *int
-	text               *string
-	posted_at          *string
-	clearedFields      map[string]struct{}
-	medias             map[int]struct{}
-	removedmedias      map[int]struct{}
-	clearedmedias      bool
-	done               bool
-	oldValue           func(context.Context) (*Post, error)
-	predicates         []predicate.Post
+	op                  Op
+	typ                 string
+	id                  *int
+	text                *string
+	posted_at           *string
+	created_at          *time.Time
+	updated_at          *time.Time
+	clearedFields       map[string]struct{}
+	medias              map[int]struct{}
+	removedmedias       map[int]struct{}
+	clearedmedias       bool
+	subscription        *int
+	clearedsubscription bool
+	done                bool
+	oldValue            func(context.Context) (*Post, error)
+	predicates          []predicate.Post
 }
 
 var _ ent.Mutation = (*PostMutation)(nil)
@@ -2033,6 +2220,12 @@ func (m PostMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Post entities.
+func (m *PostMutation) SetID(id int) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
 func (m *PostMutation) ID() (id int, exists bool) {
@@ -2063,13 +2256,12 @@ func (m *PostMutation) IDs(ctx context.Context) ([]int, error) {
 
 // SetSubscriptionID sets the "subscription_id" field.
 func (m *PostMutation) SetSubscriptionID(i int) {
-	m.subscription_id = &i
-	m.addsubscription_id = nil
+	m.subscription = &i
 }
 
 // SubscriptionID returns the value of the "subscription_id" field in the mutation.
 func (m *PostMutation) SubscriptionID() (r int, exists bool) {
-	v := m.subscription_id
+	v := m.subscription
 	if v == nil {
 		return
 	}
@@ -2093,28 +2285,9 @@ func (m *PostMutation) OldSubscriptionID(ctx context.Context) (v int, err error)
 	return oldValue.SubscriptionID, nil
 }
 
-// AddSubscriptionID adds i to the "subscription_id" field.
-func (m *PostMutation) AddSubscriptionID(i int) {
-	if m.addsubscription_id != nil {
-		*m.addsubscription_id += i
-	} else {
-		m.addsubscription_id = &i
-	}
-}
-
-// AddedSubscriptionID returns the value that was added to the "subscription_id" field in this mutation.
-func (m *PostMutation) AddedSubscriptionID() (r int, exists bool) {
-	v := m.addsubscription_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
 // ResetSubscriptionID resets all changes to the "subscription_id" field.
 func (m *PostMutation) ResetSubscriptionID() {
-	m.subscription_id = nil
-	m.addsubscription_id = nil
+	m.subscription = nil
 }
 
 // SetText sets the "text" field.
@@ -2189,6 +2362,78 @@ func (m *PostMutation) ResetPostedAt() {
 	m.posted_at = nil
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (m *PostMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *PostMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Post entity.
+// If the Post object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PostMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *PostMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *PostMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *PostMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Post entity.
+// If the Post object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PostMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *PostMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
 // AddMediaIDs adds the "medias" edge to the Media entity by ids.
 func (m *PostMutation) AddMediaIDs(ids ...int) {
 	if m.medias == nil {
@@ -2243,6 +2488,32 @@ func (m *PostMutation) ResetMedias() {
 	m.removedmedias = nil
 }
 
+// ClearSubscription clears the "subscription" edge to the Subscription entity.
+func (m *PostMutation) ClearSubscription() {
+	m.clearedsubscription = true
+}
+
+// SubscriptionCleared reports if the "subscription" edge to the Subscription entity was cleared.
+func (m *PostMutation) SubscriptionCleared() bool {
+	return m.clearedsubscription
+}
+
+// SubscriptionIDs returns the "subscription" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SubscriptionID instead. It exists only for internal usage by the builders.
+func (m *PostMutation) SubscriptionIDs() (ids []int) {
+	if id := m.subscription; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSubscription resets all changes to the "subscription" edge.
+func (m *PostMutation) ResetSubscription() {
+	m.subscription = nil
+	m.clearedsubscription = false
+}
+
 // Where appends a list predicates to the PostMutation builder.
 func (m *PostMutation) Where(ps ...predicate.Post) {
 	m.predicates = append(m.predicates, ps...)
@@ -2277,8 +2548,8 @@ func (m *PostMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PostMutation) Fields() []string {
-	fields := make([]string, 0, 3)
-	if m.subscription_id != nil {
+	fields := make([]string, 0, 5)
+	if m.subscription != nil {
 		fields = append(fields, post.FieldSubscriptionID)
 	}
 	if m.text != nil {
@@ -2286,6 +2557,12 @@ func (m *PostMutation) Fields() []string {
 	}
 	if m.posted_at != nil {
 		fields = append(fields, post.FieldPostedAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, post.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, post.FieldUpdatedAt)
 	}
 	return fields
 }
@@ -2301,6 +2578,10 @@ func (m *PostMutation) Field(name string) (ent.Value, bool) {
 		return m.Text()
 	case post.FieldPostedAt:
 		return m.PostedAt()
+	case post.FieldCreatedAt:
+		return m.CreatedAt()
+	case post.FieldUpdatedAt:
+		return m.UpdatedAt()
 	}
 	return nil, false
 }
@@ -2316,6 +2597,10 @@ func (m *PostMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldText(ctx)
 	case post.FieldPostedAt:
 		return m.OldPostedAt(ctx)
+	case post.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case post.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Post field %s", name)
 }
@@ -2346,6 +2631,20 @@ func (m *PostMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPostedAt(v)
 		return nil
+	case post.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case post.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Post field %s", name)
 }
@@ -2354,9 +2653,6 @@ func (m *PostMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *PostMutation) AddedFields() []string {
 	var fields []string
-	if m.addsubscription_id != nil {
-		fields = append(fields, post.FieldSubscriptionID)
-	}
 	return fields
 }
 
@@ -2365,8 +2661,6 @@ func (m *PostMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *PostMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case post.FieldSubscriptionID:
-		return m.AddedSubscriptionID()
 	}
 	return nil, false
 }
@@ -2376,13 +2670,6 @@ func (m *PostMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *PostMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case post.FieldSubscriptionID:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddSubscriptionID(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Post numeric field %s", name)
 }
@@ -2419,15 +2706,24 @@ func (m *PostMutation) ResetField(name string) error {
 	case post.FieldPostedAt:
 		m.ResetPostedAt()
 		return nil
+	case post.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case post.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
 	}
 	return fmt.Errorf("unknown Post field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PostMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.medias != nil {
 		edges = append(edges, post.EdgeMedias)
+	}
+	if m.subscription != nil {
+		edges = append(edges, post.EdgeSubscription)
 	}
 	return edges
 }
@@ -2442,13 +2738,17 @@ func (m *PostMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case post.EdgeSubscription:
+		if id := m.subscription; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PostMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedmedias != nil {
 		edges = append(edges, post.EdgeMedias)
 	}
@@ -2471,9 +2771,12 @@ func (m *PostMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PostMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedmedias {
 		edges = append(edges, post.EdgeMedias)
+	}
+	if m.clearedsubscription {
+		edges = append(edges, post.EdgeSubscription)
 	}
 	return edges
 }
@@ -2484,6 +2787,8 @@ func (m *PostMutation) EdgeCleared(name string) bool {
 	switch name {
 	case post.EdgeMedias:
 		return m.clearedmedias
+	case post.EdgeSubscription:
+		return m.clearedsubscription
 	}
 	return false
 }
@@ -2492,6 +2797,9 @@ func (m *PostMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *PostMutation) ClearEdge(name string) error {
 	switch name {
+	case post.EdgeSubscription:
+		m.ClearSubscription()
+		return nil
 	}
 	return fmt.Errorf("unknown Post unique edge %s", name)
 }
@@ -2503,6 +2811,9 @@ func (m *PostMutation) ResetEdge(name string) error {
 	case post.EdgeMedias:
 		m.ResetMedias()
 		return nil
+	case post.EdgeSubscription:
+		m.ResetSubscription()
+		return nil
 	}
 	return fmt.Errorf("unknown Post edge %s", name)
 }
@@ -2510,24 +2821,29 @@ func (m *PostMutation) ResetEdge(name string) error {
 // SubscriptionMutation represents an operation that mutates the Subscription nodes in the graph.
 type SubscriptionMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	avatar        *string
-	header        *string
-	name          *string
-	username      *string
-	head_marker   *string
-	stash_id      *string
-	organized_at  *time.Time
-	enabled       *bool
-	clearedFields map[string]struct{}
-	posts         map[int]struct{}
-	removedposts  map[int]struct{}
-	clearedposts  bool
-	done          bool
-	oldValue      func(context.Context) (*Subscription, error)
-	predicates    []predicate.Subscription
+	op              Op
+	typ             string
+	id              *int
+	avatar          *string
+	header          *string
+	name            *string
+	username        *string
+	head_marker     *string
+	stash_id        *string
+	organized_at    *time.Time
+	enabled         *bool
+	created_at      *time.Time
+	updated_at      *time.Time
+	clearedFields   map[string]struct{}
+	posts           map[int]struct{}
+	removedposts    map[int]struct{}
+	clearedposts    bool
+	messages        map[int]struct{}
+	removedmessages map[int]struct{}
+	clearedmessages bool
+	done            bool
+	oldValue        func(context.Context) (*Subscription, error)
+	predicates      []predicate.Subscription
 }
 
 var _ ent.Mutation = (*SubscriptionMutation)(nil)
@@ -2598,6 +2914,12 @@ func (m SubscriptionMutation) Tx() (*Tx, error) {
 	tx := &Tx{config: m.config}
 	tx.init()
 	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Subscription entities.
+func (m *SubscriptionMutation) SetID(id int) {
+	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
@@ -2803,9 +3125,22 @@ func (m *SubscriptionMutation) OldHeadMarker(ctx context.Context) (v string, err
 	return oldValue.HeadMarker, nil
 }
 
+// ClearHeadMarker clears the value of the "head_marker" field.
+func (m *SubscriptionMutation) ClearHeadMarker() {
+	m.head_marker = nil
+	m.clearedFields[subscription.FieldHeadMarker] = struct{}{}
+}
+
+// HeadMarkerCleared returns if the "head_marker" field was cleared in this mutation.
+func (m *SubscriptionMutation) HeadMarkerCleared() bool {
+	_, ok := m.clearedFields[subscription.FieldHeadMarker]
+	return ok
+}
+
 // ResetHeadMarker resets all changes to the "head_marker" field.
 func (m *SubscriptionMutation) ResetHeadMarker() {
 	m.head_marker = nil
+	delete(m.clearedFields, subscription.FieldHeadMarker)
 }
 
 // SetStashID sets the "stash_id" field.
@@ -2839,9 +3174,22 @@ func (m *SubscriptionMutation) OldStashID(ctx context.Context) (v string, err er
 	return oldValue.StashID, nil
 }
 
+// ClearStashID clears the value of the "stash_id" field.
+func (m *SubscriptionMutation) ClearStashID() {
+	m.stash_id = nil
+	m.clearedFields[subscription.FieldStashID] = struct{}{}
+}
+
+// StashIDCleared returns if the "stash_id" field was cleared in this mutation.
+func (m *SubscriptionMutation) StashIDCleared() bool {
+	_, ok := m.clearedFields[subscription.FieldStashID]
+	return ok
+}
+
 // ResetStashID resets all changes to the "stash_id" field.
 func (m *SubscriptionMutation) ResetStashID() {
 	m.stash_id = nil
+	delete(m.clearedFields, subscription.FieldStashID)
 }
 
 // SetOrganizedAt sets the "organized_at" field.
@@ -2929,6 +3277,78 @@ func (m *SubscriptionMutation) ResetEnabled() {
 	m.enabled = nil
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (m *SubscriptionMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SubscriptionMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Subscription entity.
+// If the Subscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubscriptionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SubscriptionMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *SubscriptionMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *SubscriptionMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Subscription entity.
+// If the Subscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubscriptionMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *SubscriptionMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
 // AddPostIDs adds the "posts" edge to the Post entity by ids.
 func (m *SubscriptionMutation) AddPostIDs(ids ...int) {
 	if m.posts == nil {
@@ -2983,6 +3403,60 @@ func (m *SubscriptionMutation) ResetPosts() {
 	m.removedposts = nil
 }
 
+// AddMessageIDs adds the "messages" edge to the Message entity by ids.
+func (m *SubscriptionMutation) AddMessageIDs(ids ...int) {
+	if m.messages == nil {
+		m.messages = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.messages[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMessages clears the "messages" edge to the Message entity.
+func (m *SubscriptionMutation) ClearMessages() {
+	m.clearedmessages = true
+}
+
+// MessagesCleared reports if the "messages" edge to the Message entity was cleared.
+func (m *SubscriptionMutation) MessagesCleared() bool {
+	return m.clearedmessages
+}
+
+// RemoveMessageIDs removes the "messages" edge to the Message entity by IDs.
+func (m *SubscriptionMutation) RemoveMessageIDs(ids ...int) {
+	if m.removedmessages == nil {
+		m.removedmessages = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.messages, ids[i])
+		m.removedmessages[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMessages returns the removed IDs of the "messages" edge to the Message entity.
+func (m *SubscriptionMutation) RemovedMessagesIDs() (ids []int) {
+	for id := range m.removedmessages {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MessagesIDs returns the "messages" edge IDs in the mutation.
+func (m *SubscriptionMutation) MessagesIDs() (ids []int) {
+	for id := range m.messages {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMessages resets all changes to the "messages" edge.
+func (m *SubscriptionMutation) ResetMessages() {
+	m.messages = nil
+	m.clearedmessages = false
+	m.removedmessages = nil
+}
+
 // Where appends a list predicates to the SubscriptionMutation builder.
 func (m *SubscriptionMutation) Where(ps ...predicate.Subscription) {
 	m.predicates = append(m.predicates, ps...)
@@ -3017,7 +3491,7 @@ func (m *SubscriptionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubscriptionMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 10)
 	if m.avatar != nil {
 		fields = append(fields, subscription.FieldAvatar)
 	}
@@ -3041,6 +3515,12 @@ func (m *SubscriptionMutation) Fields() []string {
 	}
 	if m.enabled != nil {
 		fields = append(fields, subscription.FieldEnabled)
+	}
+	if m.created_at != nil {
+		fields = append(fields, subscription.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, subscription.FieldUpdatedAt)
 	}
 	return fields
 }
@@ -3066,6 +3546,10 @@ func (m *SubscriptionMutation) Field(name string) (ent.Value, bool) {
 		return m.OrganizedAt()
 	case subscription.FieldEnabled:
 		return m.Enabled()
+	case subscription.FieldCreatedAt:
+		return m.CreatedAt()
+	case subscription.FieldUpdatedAt:
+		return m.UpdatedAt()
 	}
 	return nil, false
 }
@@ -3091,6 +3575,10 @@ func (m *SubscriptionMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldOrganizedAt(ctx)
 	case subscription.FieldEnabled:
 		return m.OldEnabled(ctx)
+	case subscription.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case subscription.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Subscription field %s", name)
 }
@@ -3156,6 +3644,20 @@ func (m *SubscriptionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetEnabled(v)
 		return nil
+	case subscription.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case subscription.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Subscription field %s", name)
 }
@@ -3186,6 +3688,12 @@ func (m *SubscriptionMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *SubscriptionMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(subscription.FieldHeadMarker) {
+		fields = append(fields, subscription.FieldHeadMarker)
+	}
+	if m.FieldCleared(subscription.FieldStashID) {
+		fields = append(fields, subscription.FieldStashID)
+	}
 	if m.FieldCleared(subscription.FieldOrganizedAt) {
 		fields = append(fields, subscription.FieldOrganizedAt)
 	}
@@ -3203,6 +3711,12 @@ func (m *SubscriptionMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *SubscriptionMutation) ClearField(name string) error {
 	switch name {
+	case subscription.FieldHeadMarker:
+		m.ClearHeadMarker()
+		return nil
+	case subscription.FieldStashID:
+		m.ClearStashID()
+		return nil
 	case subscription.FieldOrganizedAt:
 		m.ClearOrganizedAt()
 		return nil
@@ -3238,15 +3752,24 @@ func (m *SubscriptionMutation) ResetField(name string) error {
 	case subscription.FieldEnabled:
 		m.ResetEnabled()
 		return nil
+	case subscription.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case subscription.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
 	}
 	return fmt.Errorf("unknown Subscription field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *SubscriptionMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.posts != nil {
 		edges = append(edges, subscription.EdgePosts)
+	}
+	if m.messages != nil {
+		edges = append(edges, subscription.EdgeMessages)
 	}
 	return edges
 }
@@ -3261,15 +3784,24 @@ func (m *SubscriptionMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case subscription.EdgeMessages:
+		ids := make([]ent.Value, 0, len(m.messages))
+		for id := range m.messages {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *SubscriptionMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedposts != nil {
 		edges = append(edges, subscription.EdgePosts)
+	}
+	if m.removedmessages != nil {
+		edges = append(edges, subscription.EdgeMessages)
 	}
 	return edges
 }
@@ -3284,15 +3816,24 @@ func (m *SubscriptionMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case subscription.EdgeMessages:
+		ids := make([]ent.Value, 0, len(m.removedmessages))
+		for id := range m.removedmessages {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *SubscriptionMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedposts {
 		edges = append(edges, subscription.EdgePosts)
+	}
+	if m.clearedmessages {
+		edges = append(edges, subscription.EdgeMessages)
 	}
 	return edges
 }
@@ -3303,6 +3844,8 @@ func (m *SubscriptionMutation) EdgeCleared(name string) bool {
 	switch name {
 	case subscription.EdgePosts:
 		return m.clearedposts
+	case subscription.EdgeMessages:
+		return m.clearedmessages
 	}
 	return false
 }
@@ -3321,6 +3864,9 @@ func (m *SubscriptionMutation) ResetEdge(name string) error {
 	switch name {
 	case subscription.EdgePosts:
 		m.ResetPosts()
+		return nil
+	case subscription.EdgeMessages:
+		m.ResetMessages()
 		return nil
 	}
 	return fmt.Errorf("unknown Subscription edge %s", name)

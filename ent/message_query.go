@@ -14,6 +14,7 @@ import (
 	"github.com/ofdl/ofdl/ent/message"
 	"github.com/ofdl/ofdl/ent/messagemedia"
 	"github.com/ofdl/ofdl/ent/predicate"
+	"github.com/ofdl/ofdl/ent/subscription"
 )
 
 // MessageQuery is the builder for querying Message entities.
@@ -23,7 +24,8 @@ type MessageQuery struct {
 	order            []message.OrderOption
 	inters           []Interceptor
 	predicates       []predicate.Message
-	withMessageMedia *MessageMediaQuery
+	withMedia        *MessageMediaQuery
+	withSubscription *SubscriptionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -60,8 +62,8 @@ func (mq *MessageQuery) Order(o ...message.OrderOption) *MessageQuery {
 	return mq
 }
 
-// QueryMessageMedia chains the current query on the "message_media" edge.
-func (mq *MessageQuery) QueryMessageMedia() *MessageMediaQuery {
+// QueryMedia chains the current query on the "media" edge.
+func (mq *MessageQuery) QueryMedia() *MessageMediaQuery {
 	query := (&MessageMediaClient{config: mq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := mq.prepareQuery(ctx); err != nil {
@@ -74,7 +76,29 @@ func (mq *MessageQuery) QueryMessageMedia() *MessageMediaQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(message.Table, message.FieldID, selector),
 			sqlgraph.To(messagemedia.Table, messagemedia.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, message.MessageMediaTable, message.MessageMediaColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, message.MediaTable, message.MediaColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySubscription chains the current query on the "subscription" edge.
+func (mq *MessageQuery) QuerySubscription() *SubscriptionQuery {
+	query := (&SubscriptionClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, selector),
+			sqlgraph.To(subscription.Table, subscription.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, message.SubscriptionTable, message.SubscriptionColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
 		return fromU, nil
@@ -274,21 +298,33 @@ func (mq *MessageQuery) Clone() *MessageQuery {
 		order:            append([]message.OrderOption{}, mq.order...),
 		inters:           append([]Interceptor{}, mq.inters...),
 		predicates:       append([]predicate.Message{}, mq.predicates...),
-		withMessageMedia: mq.withMessageMedia.Clone(),
+		withMedia:        mq.withMedia.Clone(),
+		withSubscription: mq.withSubscription.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
 	}
 }
 
-// WithMessageMedia tells the query-builder to eager-load the nodes that are connected to
-// the "message_media" edge. The optional arguments are used to configure the query builder of the edge.
-func (mq *MessageQuery) WithMessageMedia(opts ...func(*MessageMediaQuery)) *MessageQuery {
+// WithMedia tells the query-builder to eager-load the nodes that are connected to
+// the "media" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MessageQuery) WithMedia(opts ...func(*MessageMediaQuery)) *MessageQuery {
 	query := (&MessageMediaClient{config: mq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	mq.withMessageMedia = query
+	mq.withMedia = query
+	return mq
+}
+
+// WithSubscription tells the query-builder to eager-load the nodes that are connected to
+// the "subscription" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MessageQuery) WithSubscription(opts ...func(*SubscriptionQuery)) *MessageQuery {
+	query := (&SubscriptionClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withSubscription = query
 	return mq
 }
 
@@ -370,8 +406,9 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	var (
 		nodes       = []*Message{}
 		_spec       = mq.querySpec()
-		loadedTypes = [1]bool{
-			mq.withMessageMedia != nil,
+		loadedTypes = [2]bool{
+			mq.withMedia != nil,
+			mq.withSubscription != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -392,17 +429,23 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := mq.withMessageMedia; query != nil {
-		if err := mq.loadMessageMedia(ctx, query, nodes,
-			func(n *Message) { n.Edges.MessageMedia = []*MessageMedia{} },
-			func(n *Message, e *MessageMedia) { n.Edges.MessageMedia = append(n.Edges.MessageMedia, e) }); err != nil {
+	if query := mq.withMedia; query != nil {
+		if err := mq.loadMedia(ctx, query, nodes,
+			func(n *Message) { n.Edges.Media = []*MessageMedia{} },
+			func(n *Message, e *MessageMedia) { n.Edges.Media = append(n.Edges.Media, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := mq.withSubscription; query != nil {
+		if err := mq.loadSubscription(ctx, query, nodes, nil,
+			func(n *Message, e *Subscription) { n.Edges.Subscription = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (mq *MessageQuery) loadMessageMedia(ctx context.Context, query *MessageMediaQuery, nodes []*Message, init func(*Message), assign func(*Message, *MessageMedia)) error {
+func (mq *MessageQuery) loadMedia(ctx context.Context, query *MessageMediaQuery, nodes []*Message, init func(*Message), assign func(*Message, *MessageMedia)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Message)
 	for i := range nodes {
@@ -412,24 +455,52 @@ func (mq *MessageQuery) loadMessageMedia(ctx context.Context, query *MessageMedi
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(messagemedia.FieldMessageID)
+	}
 	query.Where(predicate.MessageMedia(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(message.MessageMediaColumn), fks...))
+		s.Where(sql.InValues(s.C(message.MediaColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.message_id
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "message_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.MessageID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "message_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "message_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (mq *MessageQuery) loadSubscription(ctx context.Context, query *SubscriptionQuery, nodes []*Message, init func(*Message), assign func(*Message, *Subscription)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Message)
+	for i := range nodes {
+		fk := nodes[i].SubscriptionID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(subscription.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "subscription_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
@@ -458,6 +529,9 @@ func (mq *MessageQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != message.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if mq.withSubscription != nil {
+			_spec.Node.AddColumnOnce(message.FieldSubscriptionID)
 		}
 	}
 	if ps := mq.predicates; len(ps) > 0 {

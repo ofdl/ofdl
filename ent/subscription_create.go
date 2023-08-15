@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ofdl/ofdl/ent/message"
 	"github.com/ofdl/ofdl/ent/post"
 	"github.com/ofdl/ofdl/ent/subscription"
 )
@@ -19,6 +21,7 @@ type SubscriptionCreate struct {
 	config
 	mutation *SubscriptionMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetAvatar sets the "avatar" field.
@@ -51,9 +54,25 @@ func (sc *SubscriptionCreate) SetHeadMarker(s string) *SubscriptionCreate {
 	return sc
 }
 
+// SetNillableHeadMarker sets the "head_marker" field if the given value is not nil.
+func (sc *SubscriptionCreate) SetNillableHeadMarker(s *string) *SubscriptionCreate {
+	if s != nil {
+		sc.SetHeadMarker(*s)
+	}
+	return sc
+}
+
 // SetStashID sets the "stash_id" field.
 func (sc *SubscriptionCreate) SetStashID(s string) *SubscriptionCreate {
 	sc.mutation.SetStashID(s)
+	return sc
+}
+
+// SetNillableStashID sets the "stash_id" field if the given value is not nil.
+func (sc *SubscriptionCreate) SetNillableStashID(s *string) *SubscriptionCreate {
+	if s != nil {
+		sc.SetStashID(*s)
+	}
 	return sc
 }
 
@@ -85,6 +104,40 @@ func (sc *SubscriptionCreate) SetNillableEnabled(b *bool) *SubscriptionCreate {
 	return sc
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (sc *SubscriptionCreate) SetCreatedAt(t time.Time) *SubscriptionCreate {
+	sc.mutation.SetCreatedAt(t)
+	return sc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (sc *SubscriptionCreate) SetNillableCreatedAt(t *time.Time) *SubscriptionCreate {
+	if t != nil {
+		sc.SetCreatedAt(*t)
+	}
+	return sc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (sc *SubscriptionCreate) SetUpdatedAt(t time.Time) *SubscriptionCreate {
+	sc.mutation.SetUpdatedAt(t)
+	return sc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (sc *SubscriptionCreate) SetNillableUpdatedAt(t *time.Time) *SubscriptionCreate {
+	if t != nil {
+		sc.SetUpdatedAt(*t)
+	}
+	return sc
+}
+
+// SetID sets the "id" field.
+func (sc *SubscriptionCreate) SetID(i int) *SubscriptionCreate {
+	sc.mutation.SetID(i)
+	return sc
+}
+
 // AddPostIDs adds the "posts" edge to the Post entity by IDs.
 func (sc *SubscriptionCreate) AddPostIDs(ids ...int) *SubscriptionCreate {
 	sc.mutation.AddPostIDs(ids...)
@@ -98,6 +151,21 @@ func (sc *SubscriptionCreate) AddPosts(p ...*Post) *SubscriptionCreate {
 		ids[i] = p[i].ID
 	}
 	return sc.AddPostIDs(ids...)
+}
+
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (sc *SubscriptionCreate) AddMessageIDs(ids ...int) *SubscriptionCreate {
+	sc.mutation.AddMessageIDs(ids...)
+	return sc
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (sc *SubscriptionCreate) AddMessages(m ...*Message) *SubscriptionCreate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return sc.AddMessageIDs(ids...)
 }
 
 // Mutation returns the SubscriptionMutation object of the builder.
@@ -139,6 +207,14 @@ func (sc *SubscriptionCreate) defaults() {
 		v := subscription.DefaultEnabled
 		sc.mutation.SetEnabled(v)
 	}
+	if _, ok := sc.mutation.CreatedAt(); !ok {
+		v := subscription.DefaultCreatedAt()
+		sc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := sc.mutation.UpdatedAt(); !ok {
+		v := subscription.DefaultUpdatedAt()
+		sc.mutation.SetUpdatedAt(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -155,14 +231,19 @@ func (sc *SubscriptionCreate) check() error {
 	if _, ok := sc.mutation.Username(); !ok {
 		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "Subscription.username"`)}
 	}
-	if _, ok := sc.mutation.HeadMarker(); !ok {
-		return &ValidationError{Name: "head_marker", err: errors.New(`ent: missing required field "Subscription.head_marker"`)}
-	}
-	if _, ok := sc.mutation.StashID(); !ok {
-		return &ValidationError{Name: "stash_id", err: errors.New(`ent: missing required field "Subscription.stash_id"`)}
-	}
 	if _, ok := sc.mutation.Enabled(); !ok {
 		return &ValidationError{Name: "enabled", err: errors.New(`ent: missing required field "Subscription.enabled"`)}
+	}
+	if _, ok := sc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Subscription.created_at"`)}
+	}
+	if _, ok := sc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Subscription.updated_at"`)}
+	}
+	if v, ok := sc.mutation.ID(); ok {
+		if err := subscription.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Subscription.id": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -178,8 +259,10 @@ func (sc *SubscriptionCreate) sqlSave(ctx context.Context) (*Subscription, error
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int(id)
+	}
 	sc.mutation.id = &_node.ID
 	sc.mutation.done = true
 	return _node, nil
@@ -190,6 +273,11 @@ func (sc *SubscriptionCreate) createSpec() (*Subscription, *sqlgraph.CreateSpec)
 		_node = &Subscription{config: sc.config}
 		_spec = sqlgraph.NewCreateSpec(subscription.Table, sqlgraph.NewFieldSpec(subscription.FieldID, field.TypeInt))
 	)
+	_spec.OnConflict = sc.conflict
+	if id, ok := sc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := sc.mutation.Avatar(); ok {
 		_spec.SetField(subscription.FieldAvatar, field.TypeString, value)
 		_node.Avatar = value
@@ -222,6 +310,14 @@ func (sc *SubscriptionCreate) createSpec() (*Subscription, *sqlgraph.CreateSpec)
 		_spec.SetField(subscription.FieldEnabled, field.TypeBool, value)
 		_node.Enabled = value
 	}
+	if value, ok := sc.mutation.CreatedAt(); ok {
+		_spec.SetField(subscription.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := sc.mutation.UpdatedAt(); ok {
+		_spec.SetField(subscription.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if nodes := sc.mutation.PostsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -238,13 +334,459 @@ func (sc *SubscriptionCreate) createSpec() (*Subscription, *sqlgraph.CreateSpec)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := sc.mutation.MessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   subscription.MessagesTable,
+			Columns: []string{subscription.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Subscription.Create().
+//		SetAvatar(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.SubscriptionUpsert) {
+//			SetAvatar(v+v).
+//		}).
+//		Exec(ctx)
+func (sc *SubscriptionCreate) OnConflict(opts ...sql.ConflictOption) *SubscriptionUpsertOne {
+	sc.conflict = opts
+	return &SubscriptionUpsertOne{
+		create: sc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Subscription.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (sc *SubscriptionCreate) OnConflictColumns(columns ...string) *SubscriptionUpsertOne {
+	sc.conflict = append(sc.conflict, sql.ConflictColumns(columns...))
+	return &SubscriptionUpsertOne{
+		create: sc,
+	}
+}
+
+type (
+	// SubscriptionUpsertOne is the builder for "upsert"-ing
+	//  one Subscription node.
+	SubscriptionUpsertOne struct {
+		create *SubscriptionCreate
+	}
+
+	// SubscriptionUpsert is the "OnConflict" setter.
+	SubscriptionUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetAvatar sets the "avatar" field.
+func (u *SubscriptionUpsert) SetAvatar(v string) *SubscriptionUpsert {
+	u.Set(subscription.FieldAvatar, v)
+	return u
+}
+
+// UpdateAvatar sets the "avatar" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateAvatar() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldAvatar)
+	return u
+}
+
+// SetHeader sets the "header" field.
+func (u *SubscriptionUpsert) SetHeader(v string) *SubscriptionUpsert {
+	u.Set(subscription.FieldHeader, v)
+	return u
+}
+
+// UpdateHeader sets the "header" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateHeader() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldHeader)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *SubscriptionUpsert) SetName(v string) *SubscriptionUpsert {
+	u.Set(subscription.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateName() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldName)
+	return u
+}
+
+// SetUsername sets the "username" field.
+func (u *SubscriptionUpsert) SetUsername(v string) *SubscriptionUpsert {
+	u.Set(subscription.FieldUsername, v)
+	return u
+}
+
+// UpdateUsername sets the "username" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateUsername() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldUsername)
+	return u
+}
+
+// SetHeadMarker sets the "head_marker" field.
+func (u *SubscriptionUpsert) SetHeadMarker(v string) *SubscriptionUpsert {
+	u.Set(subscription.FieldHeadMarker, v)
+	return u
+}
+
+// UpdateHeadMarker sets the "head_marker" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateHeadMarker() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldHeadMarker)
+	return u
+}
+
+// ClearHeadMarker clears the value of the "head_marker" field.
+func (u *SubscriptionUpsert) ClearHeadMarker() *SubscriptionUpsert {
+	u.SetNull(subscription.FieldHeadMarker)
+	return u
+}
+
+// SetStashID sets the "stash_id" field.
+func (u *SubscriptionUpsert) SetStashID(v string) *SubscriptionUpsert {
+	u.Set(subscription.FieldStashID, v)
+	return u
+}
+
+// UpdateStashID sets the "stash_id" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateStashID() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldStashID)
+	return u
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (u *SubscriptionUpsert) ClearStashID() *SubscriptionUpsert {
+	u.SetNull(subscription.FieldStashID)
+	return u
+}
+
+// SetOrganizedAt sets the "organized_at" field.
+func (u *SubscriptionUpsert) SetOrganizedAt(v time.Time) *SubscriptionUpsert {
+	u.Set(subscription.FieldOrganizedAt, v)
+	return u
+}
+
+// UpdateOrganizedAt sets the "organized_at" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateOrganizedAt() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldOrganizedAt)
+	return u
+}
+
+// ClearOrganizedAt clears the value of the "organized_at" field.
+func (u *SubscriptionUpsert) ClearOrganizedAt() *SubscriptionUpsert {
+	u.SetNull(subscription.FieldOrganizedAt)
+	return u
+}
+
+// SetEnabled sets the "enabled" field.
+func (u *SubscriptionUpsert) SetEnabled(v bool) *SubscriptionUpsert {
+	u.Set(subscription.FieldEnabled, v)
+	return u
+}
+
+// UpdateEnabled sets the "enabled" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateEnabled() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldEnabled)
+	return u
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (u *SubscriptionUpsert) SetCreatedAt(v time.Time) *SubscriptionUpsert {
+	u.Set(subscription.FieldCreatedAt, v)
+	return u
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateCreatedAt() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldCreatedAt)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SubscriptionUpsert) SetUpdatedAt(v time.Time) *SubscriptionUpsert {
+	u.Set(subscription.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SubscriptionUpsert) UpdateUpdatedAt() *SubscriptionUpsert {
+	u.SetExcluded(subscription.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Subscription.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(subscription.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *SubscriptionUpsertOne) UpdateNewValues() *SubscriptionUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(subscription.FieldID)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Subscription.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *SubscriptionUpsertOne) Ignore() *SubscriptionUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *SubscriptionUpsertOne) DoNothing() *SubscriptionUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the SubscriptionCreate.OnConflict
+// documentation for more info.
+func (u *SubscriptionUpsertOne) Update(set func(*SubscriptionUpsert)) *SubscriptionUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&SubscriptionUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetAvatar sets the "avatar" field.
+func (u *SubscriptionUpsertOne) SetAvatar(v string) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetAvatar(v)
+	})
+}
+
+// UpdateAvatar sets the "avatar" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateAvatar() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateAvatar()
+	})
+}
+
+// SetHeader sets the "header" field.
+func (u *SubscriptionUpsertOne) SetHeader(v string) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetHeader(v)
+	})
+}
+
+// UpdateHeader sets the "header" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateHeader() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateHeader()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *SubscriptionUpsertOne) SetName(v string) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateName() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetUsername sets the "username" field.
+func (u *SubscriptionUpsertOne) SetUsername(v string) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetUsername(v)
+	})
+}
+
+// UpdateUsername sets the "username" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateUsername() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateUsername()
+	})
+}
+
+// SetHeadMarker sets the "head_marker" field.
+func (u *SubscriptionUpsertOne) SetHeadMarker(v string) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetHeadMarker(v)
+	})
+}
+
+// UpdateHeadMarker sets the "head_marker" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateHeadMarker() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateHeadMarker()
+	})
+}
+
+// ClearHeadMarker clears the value of the "head_marker" field.
+func (u *SubscriptionUpsertOne) ClearHeadMarker() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearHeadMarker()
+	})
+}
+
+// SetStashID sets the "stash_id" field.
+func (u *SubscriptionUpsertOne) SetStashID(v string) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetStashID(v)
+	})
+}
+
+// UpdateStashID sets the "stash_id" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateStashID() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateStashID()
+	})
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (u *SubscriptionUpsertOne) ClearStashID() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearStashID()
+	})
+}
+
+// SetOrganizedAt sets the "organized_at" field.
+func (u *SubscriptionUpsertOne) SetOrganizedAt(v time.Time) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetOrganizedAt(v)
+	})
+}
+
+// UpdateOrganizedAt sets the "organized_at" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateOrganizedAt() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateOrganizedAt()
+	})
+}
+
+// ClearOrganizedAt clears the value of the "organized_at" field.
+func (u *SubscriptionUpsertOne) ClearOrganizedAt() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearOrganizedAt()
+	})
+}
+
+// SetEnabled sets the "enabled" field.
+func (u *SubscriptionUpsertOne) SetEnabled(v bool) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetEnabled(v)
+	})
+}
+
+// UpdateEnabled sets the "enabled" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateEnabled() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateEnabled()
+	})
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (u *SubscriptionUpsertOne) SetCreatedAt(v time.Time) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetCreatedAt(v)
+	})
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateCreatedAt() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateCreatedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SubscriptionUpsertOne) SetUpdatedAt(v time.Time) *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SubscriptionUpsertOne) UpdateUpdatedAt() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *SubscriptionUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for SubscriptionCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *SubscriptionUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *SubscriptionUpsertOne) ID(ctx context.Context) (id int, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *SubscriptionUpsertOne) IDX(ctx context.Context) int {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
 }
 
 // SubscriptionCreateBulk is the builder for creating many Subscription entities in bulk.
 type SubscriptionCreateBulk struct {
 	config
 	builders []*SubscriptionCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Subscription entities in the database.
@@ -271,6 +813,7 @@ func (scb *SubscriptionCreateBulk) Save(ctx context.Context) ([]*Subscription, e
 					_, err = mutators[i+1].Mutate(root, scb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = scb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, scb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -282,7 +825,7 @@ func (scb *SubscriptionCreateBulk) Save(ctx context.Context) ([]*Subscription, e
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int(id)
 				}
@@ -321,6 +864,278 @@ func (scb *SubscriptionCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (scb *SubscriptionCreateBulk) ExecX(ctx context.Context) {
 	if err := scb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Subscription.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.SubscriptionUpsert) {
+//			SetAvatar(v+v).
+//		}).
+//		Exec(ctx)
+func (scb *SubscriptionCreateBulk) OnConflict(opts ...sql.ConflictOption) *SubscriptionUpsertBulk {
+	scb.conflict = opts
+	return &SubscriptionUpsertBulk{
+		create: scb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Subscription.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (scb *SubscriptionCreateBulk) OnConflictColumns(columns ...string) *SubscriptionUpsertBulk {
+	scb.conflict = append(scb.conflict, sql.ConflictColumns(columns...))
+	return &SubscriptionUpsertBulk{
+		create: scb,
+	}
+}
+
+// SubscriptionUpsertBulk is the builder for "upsert"-ing
+// a bulk of Subscription nodes.
+type SubscriptionUpsertBulk struct {
+	create *SubscriptionCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Subscription.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(subscription.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *SubscriptionUpsertBulk) UpdateNewValues() *SubscriptionUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(subscription.FieldID)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Subscription.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *SubscriptionUpsertBulk) Ignore() *SubscriptionUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *SubscriptionUpsertBulk) DoNothing() *SubscriptionUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the SubscriptionCreateBulk.OnConflict
+// documentation for more info.
+func (u *SubscriptionUpsertBulk) Update(set func(*SubscriptionUpsert)) *SubscriptionUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&SubscriptionUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetAvatar sets the "avatar" field.
+func (u *SubscriptionUpsertBulk) SetAvatar(v string) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetAvatar(v)
+	})
+}
+
+// UpdateAvatar sets the "avatar" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateAvatar() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateAvatar()
+	})
+}
+
+// SetHeader sets the "header" field.
+func (u *SubscriptionUpsertBulk) SetHeader(v string) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetHeader(v)
+	})
+}
+
+// UpdateHeader sets the "header" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateHeader() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateHeader()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *SubscriptionUpsertBulk) SetName(v string) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateName() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetUsername sets the "username" field.
+func (u *SubscriptionUpsertBulk) SetUsername(v string) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetUsername(v)
+	})
+}
+
+// UpdateUsername sets the "username" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateUsername() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateUsername()
+	})
+}
+
+// SetHeadMarker sets the "head_marker" field.
+func (u *SubscriptionUpsertBulk) SetHeadMarker(v string) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetHeadMarker(v)
+	})
+}
+
+// UpdateHeadMarker sets the "head_marker" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateHeadMarker() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateHeadMarker()
+	})
+}
+
+// ClearHeadMarker clears the value of the "head_marker" field.
+func (u *SubscriptionUpsertBulk) ClearHeadMarker() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearHeadMarker()
+	})
+}
+
+// SetStashID sets the "stash_id" field.
+func (u *SubscriptionUpsertBulk) SetStashID(v string) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetStashID(v)
+	})
+}
+
+// UpdateStashID sets the "stash_id" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateStashID() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateStashID()
+	})
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (u *SubscriptionUpsertBulk) ClearStashID() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearStashID()
+	})
+}
+
+// SetOrganizedAt sets the "organized_at" field.
+func (u *SubscriptionUpsertBulk) SetOrganizedAt(v time.Time) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetOrganizedAt(v)
+	})
+}
+
+// UpdateOrganizedAt sets the "organized_at" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateOrganizedAt() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateOrganizedAt()
+	})
+}
+
+// ClearOrganizedAt clears the value of the "organized_at" field.
+func (u *SubscriptionUpsertBulk) ClearOrganizedAt() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearOrganizedAt()
+	})
+}
+
+// SetEnabled sets the "enabled" field.
+func (u *SubscriptionUpsertBulk) SetEnabled(v bool) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetEnabled(v)
+	})
+}
+
+// UpdateEnabled sets the "enabled" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateEnabled() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateEnabled()
+	})
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (u *SubscriptionUpsertBulk) SetCreatedAt(v time.Time) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetCreatedAt(v)
+	})
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateCreatedAt() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateCreatedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SubscriptionUpsertBulk) SetUpdatedAt(v time.Time) *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SubscriptionUpsertBulk) UpdateUpdatedAt() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *SubscriptionUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the SubscriptionCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for SubscriptionCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *SubscriptionUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

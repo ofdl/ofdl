@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/ofdl/ofdl/ent/predicate"
 )
 
@@ -102,26 +103,6 @@ func MessageIDIn(vs ...int) predicate.MessageMedia {
 // MessageIDNotIn applies the NotIn predicate on the "message_id" field.
 func MessageIDNotIn(vs ...int) predicate.MessageMedia {
 	return predicate.MessageMedia(sql.FieldNotIn(FieldMessageID, vs...))
-}
-
-// MessageIDGT applies the GT predicate on the "message_id" field.
-func MessageIDGT(v int) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldGT(FieldMessageID, v))
-}
-
-// MessageIDGTE applies the GTE predicate on the "message_id" field.
-func MessageIDGTE(v int) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldGTE(FieldMessageID, v))
-}
-
-// MessageIDLT applies the LT predicate on the "message_id" field.
-func MessageIDLT(v int) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldLT(FieldMessageID, v))
-}
-
-// MessageIDLTE applies the LTE predicate on the "message_id" field.
-func MessageIDLTE(v int) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldLTE(FieldMessageID, v))
 }
 
 // TypeEQ applies the EQ predicate on the "type" field.
@@ -417,6 +398,29 @@ func OrganizedAtIsNil() predicate.MessageMedia {
 // OrganizedAtNotNil applies the NotNil predicate on the "organized_at" field.
 func OrganizedAtNotNil() predicate.MessageMedia {
 	return predicate.MessageMedia(sql.FieldNotNull(FieldOrganizedAt))
+}
+
+// HasMessage applies the HasEdge predicate on the "message" edge.
+func HasMessage() predicate.MessageMedia {
+	return predicate.MessageMedia(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, MessageTable, MessageColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMessageWith applies the HasEdge predicate on the "message" edge with a given conditions (other predicates).
+func HasMessageWith(preds ...predicate.Message) predicate.MessageMedia {
+	return predicate.MessageMedia(func(s *sql.Selector) {
+		step := newMessageStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

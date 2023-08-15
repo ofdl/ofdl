@@ -11,12 +11,14 @@ var (
 	// MediaColumns holds the columns for the "media" table.
 	MediaColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "post_id", Type: field.TypeInt},
 		{Name: "type", Type: field.TypeString},
 		{Name: "full", Type: field.TypeString},
 		{Name: "downloaded_at", Type: field.TypeTime, Nullable: true},
-		{Name: "stash_id", Type: field.TypeString},
+		{Name: "stash_id", Type: field.TypeString, Nullable: true},
 		{Name: "organized_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "post_id", Type: field.TypeInt},
 	}
 	// MediaTable holds the schema information for the "media" table.
 	MediaTable = &schema.Table{
@@ -26,34 +28,42 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "media_posts_medias",
-				Columns:    []*schema.Column{MediaColumns[1]},
+				Columns:    []*schema.Column{MediaColumns[8]},
 				RefColumns: []*schema.Column{PostsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
 	// MessagesColumns holds the columns for the "messages" table.
 	MessagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "subscription_id", Type: field.TypeInt},
 		{Name: "text", Type: field.TypeString},
 		{Name: "posted_at", Type: field.TypeString},
+		{Name: "subscription_id", Type: field.TypeInt},
 	}
 	// MessagesTable holds the schema information for the "messages" table.
 	MessagesTable = &schema.Table{
 		Name:       "messages",
 		Columns:    MessagesColumns,
 		PrimaryKey: []*schema.Column{MessagesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "messages_subscriptions_messages",
+				Columns:    []*schema.Column{MessagesColumns[3]},
+				RefColumns: []*schema.Column{SubscriptionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
 	}
 	// MessageMediaColumns holds the columns for the "message_media" table.
 	MessageMediaColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "message_id", Type: field.TypeInt},
 		{Name: "type", Type: field.TypeString},
 		{Name: "full", Type: field.TypeString},
 		{Name: "downloaded_at", Type: field.TypeTime, Nullable: true},
 		{Name: "stash_id", Type: field.TypeString},
 		{Name: "organized_at", Type: field.TypeTime, Nullable: true},
+		{Name: "message_id", Type: field.TypeInt},
 	}
 	// MessageMediaTable holds the schema information for the "message_media" table.
 	MessageMediaTable = &schema.Table{
@@ -62,19 +72,21 @@ var (
 		PrimaryKey: []*schema.Column{MessageMediaColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "message_media_messages_message_media",
-				Columns:    []*schema.Column{MessageMediaColumns[1]},
+				Symbol:     "message_media_messages_media",
+				Columns:    []*schema.Column{MessageMediaColumns[6]},
 				RefColumns: []*schema.Column{MessagesColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
 	// PostsColumns holds the columns for the "posts" table.
 	PostsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "subscription_id", Type: field.TypeInt},
 		{Name: "text", Type: field.TypeString},
 		{Name: "posted_at", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "subscription_id", Type: field.TypeInt},
 	}
 	// PostsTable holds the schema information for the "posts" table.
 	PostsTable = &schema.Table{
@@ -84,9 +96,9 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "posts_subscriptions_posts",
-				Columns:    []*schema.Column{PostsColumns[1]},
+				Columns:    []*schema.Column{PostsColumns[5]},
 				RefColumns: []*schema.Column{SubscriptionsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -97,10 +109,12 @@ var (
 		{Name: "header", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "username", Type: field.TypeString},
-		{Name: "head_marker", Type: field.TypeString},
-		{Name: "stash_id", Type: field.TypeString},
+		{Name: "head_marker", Type: field.TypeString, Nullable: true},
+		{Name: "stash_id", Type: field.TypeString, Nullable: true},
 		{Name: "organized_at", Type: field.TypeTime, Nullable: true},
 		{Name: "enabled", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
 	}
 	// SubscriptionsTable holds the schema information for the "subscriptions" table.
 	SubscriptionsTable = &schema.Table{
@@ -120,6 +134,7 @@ var (
 
 func init() {
 	MediaTable.ForeignKeys[0].RefTable = PostsTable
+	MessagesTable.ForeignKeys[0].RefTable = SubscriptionsTable
 	MessageMediaTable.ForeignKeys[0].RefTable = MessagesTable
 	PostsTable.ForeignKeys[0].RefTable = SubscriptionsTable
 }

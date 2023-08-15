@@ -18,17 +18,26 @@ const (
 	FieldText = "text"
 	// FieldPostedAt holds the string denoting the posted_at field in the database.
 	FieldPostedAt = "posted_at"
-	// EdgeMessageMedia holds the string denoting the message_media edge name in mutations.
-	EdgeMessageMedia = "message_media"
+	// EdgeMedia holds the string denoting the media edge name in mutations.
+	EdgeMedia = "media"
+	// EdgeSubscription holds the string denoting the subscription edge name in mutations.
+	EdgeSubscription = "subscription"
 	// Table holds the table name of the message in the database.
 	Table = "messages"
-	// MessageMediaTable is the table that holds the message_media relation/edge.
-	MessageMediaTable = "message_media"
-	// MessageMediaInverseTable is the table name for the MessageMedia entity.
+	// MediaTable is the table that holds the media relation/edge.
+	MediaTable = "message_media"
+	// MediaInverseTable is the table name for the MessageMedia entity.
 	// It exists in this package in order to avoid circular dependency with the "messagemedia" package.
-	MessageMediaInverseTable = "message_media"
-	// MessageMediaColumn is the table column denoting the message_media relation/edge.
-	MessageMediaColumn = "message_id"
+	MediaInverseTable = "message_media"
+	// MediaColumn is the table column denoting the media relation/edge.
+	MediaColumn = "message_id"
+	// SubscriptionTable is the table that holds the subscription relation/edge.
+	SubscriptionTable = "messages"
+	// SubscriptionInverseTable is the table name for the Subscription entity.
+	// It exists in this package in order to avoid circular dependency with the "subscription" package.
+	SubscriptionInverseTable = "subscriptions"
+	// SubscriptionColumn is the table column denoting the subscription relation/edge.
+	SubscriptionColumn = "subscription_id"
 )
 
 // Columns holds all SQL columns for message fields.
@@ -72,23 +81,37 @@ func ByPostedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPostedAt, opts...).ToFunc()
 }
 
-// ByMessageMediaCount orders the results by message_media count.
-func ByMessageMediaCount(opts ...sql.OrderTermOption) OrderOption {
+// ByMediaCount orders the results by media count.
+func ByMediaCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newMessageMediaStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newMediaStep(), opts...)
 	}
 }
 
-// ByMessageMedia orders the results by message_media terms.
-func ByMessageMedia(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByMedia orders the results by media terms.
+func ByMedia(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newMessageMediaStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newMediaStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newMessageMediaStep() *sqlgraph.Step {
+
+// BySubscriptionField orders the results by subscription field.
+func BySubscriptionField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSubscriptionStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newMediaStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(MessageMediaInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, MessageMediaTable, MessageMediaColumn),
+		sqlgraph.To(MediaInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, MediaTable, MediaColumn),
+	)
+}
+func newSubscriptionStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SubscriptionInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, SubscriptionTable, SubscriptionColumn),
 	)
 }

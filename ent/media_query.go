@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/ofdl/ofdl/ent/media"
+	"github.com/ofdl/ofdl/ent/post"
 	"github.com/ofdl/ofdl/ent/predicate"
 )
 
@@ -21,7 +22,7 @@ type MediaQuery struct {
 	order      []media.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Media
-	withFKs    bool
+	withPost   *PostQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -56,6 +57,28 @@ func (mq *MediaQuery) Unique(unique bool) *MediaQuery {
 func (mq *MediaQuery) Order(o ...media.OrderOption) *MediaQuery {
 	mq.order = append(mq.order, o...)
 	return mq
+}
+
+// QueryPost chains the current query on the "post" edge.
+func (mq *MediaQuery) QueryPost() *PostQuery {
+	query := (&PostClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(media.Table, media.FieldID, selector),
+			sqlgraph.To(post.Table, post.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, media.PostTable, media.PostColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Media entity from the query.
@@ -250,10 +273,22 @@ func (mq *MediaQuery) Clone() *MediaQuery {
 		order:      append([]media.OrderOption{}, mq.order...),
 		inters:     append([]Interceptor{}, mq.inters...),
 		predicates: append([]predicate.Media{}, mq.predicates...),
+		withPost:   mq.withPost.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
 	}
+}
+
+// WithPost tells the query-builder to eager-load the nodes that are connected to
+// the "post" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MediaQuery) WithPost(opts ...func(*PostQuery)) *MediaQuery {
+	query := (&PostClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withPost = query
+	return mq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -332,19 +367,19 @@ func (mq *MediaQuery) prepareQuery(ctx context.Context) error {
 
 func (mq *MediaQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Media, error) {
 	var (
-		nodes   = []*Media{}
-		withFKs = mq.withFKs
-		_spec   = mq.querySpec()
+		nodes       = []*Media{}
+		_spec       = mq.querySpec()
+		loadedTypes = [1]bool{
+			mq.withPost != nil,
+		}
 	)
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, media.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Media).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Media{config: mq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -356,7 +391,43 @@ func (mq *MediaQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Media,
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := mq.withPost; query != nil {
+		if err := mq.loadPost(ctx, query, nodes, nil,
+			func(n *Media, e *Post) { n.Edges.Post = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (mq *MediaQuery) loadPost(ctx context.Context, query *PostQuery, nodes []*Media, init func(*Media), assign func(*Media, *Post)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Media)
+	for i := range nodes {
+		fk := nodes[i].PostID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(post.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "post_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (mq *MediaQuery) sqlCount(ctx context.Context) (int, error) {
@@ -383,6 +454,9 @@ func (mq *MediaQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != media.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if mq.withPost != nil {
+			_spec.Node.AddColumnOnce(media.FieldPostID)
 		}
 	}
 	if ps := mq.predicates; len(ps) > 0 {

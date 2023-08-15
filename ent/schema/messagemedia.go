@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -24,5 +25,7 @@ func (MessageMedia) Fields() []ent.Field {
 
 // Edges of the MessageMedia.
 func (MessageMedia) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("message", Message.Type).Ref("media").Unique().Field("message_id").Required(),
+	}
 }

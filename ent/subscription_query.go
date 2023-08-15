@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ofdl/ofdl/ent/message"
 	"github.com/ofdl/ofdl/ent/post"
 	"github.com/ofdl/ofdl/ent/predicate"
 	"github.com/ofdl/ofdl/ent/subscription"
@@ -19,11 +20,12 @@ import (
 // SubscriptionQuery is the builder for querying Subscription entities.
 type SubscriptionQuery struct {
 	config
-	ctx        *QueryContext
-	order      []subscription.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Subscription
-	withPosts  *PostQuery
+	ctx          *QueryContext
+	order        []subscription.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.Subscription
+	withPosts    *PostQuery
+	withMessages *MessageQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +77,28 @@ func (sq *SubscriptionQuery) QueryPosts() *PostQuery {
 			sqlgraph.From(subscription.Table, subscription.FieldID, selector),
 			sqlgraph.To(post.Table, post.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, subscription.PostsTable, subscription.PostsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryMessages chains the current query on the "messages" edge.
+func (sq *SubscriptionQuery) QueryMessages() *MessageQuery {
+	query := (&MessageClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(subscription.Table, subscription.FieldID, selector),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, subscription.MessagesTable, subscription.MessagesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -269,12 +293,13 @@ func (sq *SubscriptionQuery) Clone() *SubscriptionQuery {
 		return nil
 	}
 	return &SubscriptionQuery{
-		config:     sq.config,
-		ctx:        sq.ctx.Clone(),
-		order:      append([]subscription.OrderOption{}, sq.order...),
-		inters:     append([]Interceptor{}, sq.inters...),
-		predicates: append([]predicate.Subscription{}, sq.predicates...),
-		withPosts:  sq.withPosts.Clone(),
+		config:       sq.config,
+		ctx:          sq.ctx.Clone(),
+		order:        append([]subscription.OrderOption{}, sq.order...),
+		inters:       append([]Interceptor{}, sq.inters...),
+		predicates:   append([]predicate.Subscription{}, sq.predicates...),
+		withPosts:    sq.withPosts.Clone(),
+		withMessages: sq.withMessages.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
@@ -289,6 +314,17 @@ func (sq *SubscriptionQuery) WithPosts(opts ...func(*PostQuery)) *SubscriptionQu
 		opt(query)
 	}
 	sq.withPosts = query
+	return sq
+}
+
+// WithMessages tells the query-builder to eager-load the nodes that are connected to
+// the "messages" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *SubscriptionQuery) WithMessages(opts ...func(*MessageQuery)) *SubscriptionQuery {
+	query := (&MessageClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withMessages = query
 	return sq
 }
 
@@ -370,8 +406,9 @@ func (sq *SubscriptionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	var (
 		nodes       = []*Subscription{}
 		_spec       = sq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			sq.withPosts != nil,
+			sq.withMessages != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -399,6 +436,13 @@ func (sq *SubscriptionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			return nil, err
 		}
 	}
+	if query := sq.withMessages; query != nil {
+		if err := sq.loadMessages(ctx, query, nodes,
+			func(n *Subscription) { n.Edges.Messages = []*Message{} },
+			func(n *Subscription, e *Message) { n.Edges.Messages = append(n.Edges.Messages, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -412,7 +456,9 @@ func (sq *SubscriptionQuery) loadPosts(ctx context.Context, query *PostQuery, no
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(post.FieldSubscriptionID)
+	}
 	query.Where(predicate.Post(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(subscription.PostsColumn), fks...))
 	}))
@@ -421,13 +467,40 @@ func (sq *SubscriptionQuery) loadPosts(ctx context.Context, query *PostQuery, no
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.subscription_id
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "subscription_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.SubscriptionID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "subscription_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "subscription_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (sq *SubscriptionQuery) loadMessages(ctx context.Context, query *MessageQuery, nodes []*Subscription, init func(*Subscription), assign func(*Subscription, *Message)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Subscription)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(message.FieldSubscriptionID)
+	}
+	query.Where(predicate.Message(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(subscription.MessagesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.SubscriptionID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "subscription_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ofdl/ofdl/ent"
+	"github.com/ofdl/ofdl/ent/media"
+	"github.com/ofdl/ofdl/ent/messagemedia"
+	"github.com/ofdl/ofdl/ent/subscription"
 	"github.com/ofdl/ofdl/model"
 	"github.com/shurcooL/graphql"
 	"github.com/spf13/viper"
@@ -13,11 +17,11 @@ func NewStash() *graphql.Client {
 	return graphql.NewClient(viper.GetString("stash.address"), nil)
 }
 
-func (o *OFDL) GetUnorganizedSubscriptions(limit int) ([]model.Subscription, error) {
-	return o.Query.Subscription.Unorganized(limit)
+func (o *OFDL) GetUnorganizedSubscriptions(limit int) ([]*ent.Subscription, error) {
+	return o.Ent.Subscription.Query().Where(subscription.OrganizedAtIsNil()).Limit(limit).All(o.ctx)
 }
 
-func (o *OFDL) OrganizeSubscription(sub model.Subscription) error {
+func (o *OFDL) OrganizeSubscription(sub *ent.Subscription) error {
 	lu := &PerformerLookup{}
 	if err := o.Stash.Query(o.ctx, lu, map[string]interface{}{
 		"name": graphql.String(sub.Username),
@@ -38,14 +42,10 @@ func (o *OFDL) OrganizeSubscription(sub model.Subscription) error {
 			return err
 		}
 
-		now := time.Now()
-		sub.StashID = pc.PerformerCreate.ID
-		sub.OrganizedAt = &now
-		if err := o.DB.Save(&sub).Error; err != nil {
-			return err
-		}
-
-		return nil
+		return sub.Update().
+			SetStashID(pc.PerformerCreate.ID).
+			SetOrganizedAt(time.Now()).
+			Exec(o.ctx)
 	}
 
 	// If found, update it
@@ -62,30 +62,30 @@ func (o *OFDL) OrganizeSubscription(sub model.Subscription) error {
 		return err
 	}
 
-	now := time.Now()
-	sub.StashID = pc.PerformerUpdate.ID
-	sub.OrganizedAt = &now
-	if err := o.DB.Save(&sub).Error; err != nil {
-		return err
-	}
-
-	return nil
+	return sub.Update().
+		SetStashID(pc.PerformerUpdate.ID).
+		SetOrganizedAt(time.Now()).
+		Exec(o.ctx)
 }
 
-func (o *OFDL) GetUnorganizedMedia(limit int) ([]model.Media, error) {
-	q := o.Query.Media
-	return q.Preload(
-		q.Post,
-		q.Post.Subscription,
-	).Unorganized(limit)
+func (o *OFDL) GetUnorganizedMedia(limit int) ([]*ent.Media, error) {
+	return o.Ent.Media.Query().
+		Where(media.OrganizedAtIsNil()).
+		WithPost(func(q *ent.PostQuery) {
+			q.WithSubscription()
+		}).
+		Limit(limit).
+		All(o.ctx)
 }
 
-func (o *OFDL) GetUnorganizedMessageMedia(limit int) ([]model.MessageMedia, error) {
-	q := o.Query.MessageMedia
-	return q.Preload(
-		q.Message,
-		q.Message.Subscription,
-	).Unorganized(limit)
+func (o *OFDL) GetUnorganizedMessageMedia(limit int) ([]*ent.MessageMedia, error) {
+	return o.Ent.MessageMedia.Query().
+		Where(messagemedia.OrganizedAtIsNil()).
+		WithMessage(func(q *ent.MessageQuery) {
+			q.WithSubscription()
+		}).
+		Limit(limit).
+		All(o.ctx)
 }
 
 func (o *OFDL) OrganizeMedia(m model.OrganizableMedia) error {

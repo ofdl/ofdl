@@ -3,6 +3,10 @@
 package ent
 
 import (
+	"time"
+
+	"github.com/ofdl/ofdl/ent/media"
+	"github.com/ofdl/ofdl/ent/post"
 	"github.com/ofdl/ofdl/ent/schema"
 	"github.com/ofdl/ofdl/ent/subscription"
 )
@@ -11,10 +15,56 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	mediaFields := schema.Media{}.Fields()
+	_ = mediaFields
+	// mediaDescCreatedAt is the schema descriptor for created_at field.
+	mediaDescCreatedAt := mediaFields[7].Descriptor()
+	// media.DefaultCreatedAt holds the default value on creation for the created_at field.
+	media.DefaultCreatedAt = mediaDescCreatedAt.Default.(func() time.Time)
+	// mediaDescUpdatedAt is the schema descriptor for updated_at field.
+	mediaDescUpdatedAt := mediaFields[8].Descriptor()
+	// media.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	media.DefaultUpdatedAt = mediaDescUpdatedAt.Default.(func() time.Time)
+	// media.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	media.UpdateDefaultUpdatedAt = mediaDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// mediaDescID is the schema descriptor for id field.
+	mediaDescID := mediaFields[0].Descriptor()
+	// media.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	media.IDValidator = mediaDescID.Validators[0].(func(int) error)
+	postFields := schema.Post{}.Fields()
+	_ = postFields
+	// postDescCreatedAt is the schema descriptor for created_at field.
+	postDescCreatedAt := postFields[4].Descriptor()
+	// post.DefaultCreatedAt holds the default value on creation for the created_at field.
+	post.DefaultCreatedAt = postDescCreatedAt.Default.(func() time.Time)
+	// postDescUpdatedAt is the schema descriptor for updated_at field.
+	postDescUpdatedAt := postFields[5].Descriptor()
+	// post.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	post.DefaultUpdatedAt = postDescUpdatedAt.Default.(func() time.Time)
+	// post.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	post.UpdateDefaultUpdatedAt = postDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// postDescID is the schema descriptor for id field.
+	postDescID := postFields[0].Descriptor()
+	// post.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	post.IDValidator = postDescID.Validators[0].(func(int) error)
 	subscriptionFields := schema.Subscription{}.Fields()
 	_ = subscriptionFields
 	// subscriptionDescEnabled is the schema descriptor for enabled field.
-	subscriptionDescEnabled := subscriptionFields[7].Descriptor()
+	subscriptionDescEnabled := subscriptionFields[8].Descriptor()
 	// subscription.DefaultEnabled holds the default value on creation for the enabled field.
 	subscription.DefaultEnabled = subscriptionDescEnabled.Default.(bool)
+	// subscriptionDescCreatedAt is the schema descriptor for created_at field.
+	subscriptionDescCreatedAt := subscriptionFields[9].Descriptor()
+	// subscription.DefaultCreatedAt holds the default value on creation for the created_at field.
+	subscription.DefaultCreatedAt = subscriptionDescCreatedAt.Default.(func() time.Time)
+	// subscriptionDescUpdatedAt is the schema descriptor for updated_at field.
+	subscriptionDescUpdatedAt := subscriptionFields[10].Descriptor()
+	// subscription.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	subscription.DefaultUpdatedAt = subscriptionDescUpdatedAt.Default.(func() time.Time)
+	// subscription.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	subscription.UpdateDefaultUpdatedAt = subscriptionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// subscriptionDescID is the schema descriptor for id field.
+	subscriptionDescID := subscriptionFields[0].Descriptor()
+	// subscription.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	subscription.IDValidator = subscriptionDescID.Validators[0].(func(int) error)
 }

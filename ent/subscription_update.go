@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ofdl/ofdl/ent/message"
 	"github.com/ofdl/ofdl/ent/post"
 	"github.com/ofdl/ofdl/ent/predicate"
 	"github.com/ofdl/ofdl/ent/subscription"
@@ -59,9 +60,37 @@ func (su *SubscriptionUpdate) SetHeadMarker(s string) *SubscriptionUpdate {
 	return su
 }
 
+// SetNillableHeadMarker sets the "head_marker" field if the given value is not nil.
+func (su *SubscriptionUpdate) SetNillableHeadMarker(s *string) *SubscriptionUpdate {
+	if s != nil {
+		su.SetHeadMarker(*s)
+	}
+	return su
+}
+
+// ClearHeadMarker clears the value of the "head_marker" field.
+func (su *SubscriptionUpdate) ClearHeadMarker() *SubscriptionUpdate {
+	su.mutation.ClearHeadMarker()
+	return su
+}
+
 // SetStashID sets the "stash_id" field.
 func (su *SubscriptionUpdate) SetStashID(s string) *SubscriptionUpdate {
 	su.mutation.SetStashID(s)
+	return su
+}
+
+// SetNillableStashID sets the "stash_id" field if the given value is not nil.
+func (su *SubscriptionUpdate) SetNillableStashID(s *string) *SubscriptionUpdate {
+	if s != nil {
+		su.SetStashID(*s)
+	}
+	return su
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (su *SubscriptionUpdate) ClearStashID() *SubscriptionUpdate {
+	su.mutation.ClearStashID()
 	return su
 }
 
@@ -99,6 +128,26 @@ func (su *SubscriptionUpdate) SetNillableEnabled(b *bool) *SubscriptionUpdate {
 	return su
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (su *SubscriptionUpdate) SetCreatedAt(t time.Time) *SubscriptionUpdate {
+	su.mutation.SetCreatedAt(t)
+	return su
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (su *SubscriptionUpdate) SetNillableCreatedAt(t *time.Time) *SubscriptionUpdate {
+	if t != nil {
+		su.SetCreatedAt(*t)
+	}
+	return su
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (su *SubscriptionUpdate) SetUpdatedAt(t time.Time) *SubscriptionUpdate {
+	su.mutation.SetUpdatedAt(t)
+	return su
+}
+
 // AddPostIDs adds the "posts" edge to the Post entity by IDs.
 func (su *SubscriptionUpdate) AddPostIDs(ids ...int) *SubscriptionUpdate {
 	su.mutation.AddPostIDs(ids...)
@@ -112,6 +161,21 @@ func (su *SubscriptionUpdate) AddPosts(p ...*Post) *SubscriptionUpdate {
 		ids[i] = p[i].ID
 	}
 	return su.AddPostIDs(ids...)
+}
+
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (su *SubscriptionUpdate) AddMessageIDs(ids ...int) *SubscriptionUpdate {
+	su.mutation.AddMessageIDs(ids...)
+	return su
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (su *SubscriptionUpdate) AddMessages(m ...*Message) *SubscriptionUpdate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return su.AddMessageIDs(ids...)
 }
 
 // Mutation returns the SubscriptionMutation object of the builder.
@@ -140,8 +204,30 @@ func (su *SubscriptionUpdate) RemovePosts(p ...*Post) *SubscriptionUpdate {
 	return su.RemovePostIDs(ids...)
 }
 
+// ClearMessages clears all "messages" edges to the Message entity.
+func (su *SubscriptionUpdate) ClearMessages() *SubscriptionUpdate {
+	su.mutation.ClearMessages()
+	return su
+}
+
+// RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
+func (su *SubscriptionUpdate) RemoveMessageIDs(ids ...int) *SubscriptionUpdate {
+	su.mutation.RemoveMessageIDs(ids...)
+	return su
+}
+
+// RemoveMessages removes "messages" edges to Message entities.
+func (su *SubscriptionUpdate) RemoveMessages(m ...*Message) *SubscriptionUpdate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return su.RemoveMessageIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (su *SubscriptionUpdate) Save(ctx context.Context) (int, error) {
+	su.defaults()
 	return withHooks(ctx, su.sqlSave, su.mutation, su.hooks)
 }
 
@@ -164,6 +250,14 @@ func (su *SubscriptionUpdate) Exec(ctx context.Context) error {
 func (su *SubscriptionUpdate) ExecX(ctx context.Context) {
 	if err := su.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (su *SubscriptionUpdate) defaults() {
+	if _, ok := su.mutation.UpdatedAt(); !ok {
+		v := subscription.UpdateDefaultUpdatedAt()
+		su.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -191,8 +285,14 @@ func (su *SubscriptionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.HeadMarker(); ok {
 		_spec.SetField(subscription.FieldHeadMarker, field.TypeString, value)
 	}
+	if su.mutation.HeadMarkerCleared() {
+		_spec.ClearField(subscription.FieldHeadMarker, field.TypeString)
+	}
 	if value, ok := su.mutation.StashID(); ok {
 		_spec.SetField(subscription.FieldStashID, field.TypeString, value)
+	}
+	if su.mutation.StashIDCleared() {
+		_spec.ClearField(subscription.FieldStashID, field.TypeString)
 	}
 	if value, ok := su.mutation.OrganizedAt(); ok {
 		_spec.SetField(subscription.FieldOrganizedAt, field.TypeTime, value)
@@ -202,6 +302,12 @@ func (su *SubscriptionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.Enabled(); ok {
 		_spec.SetField(subscription.FieldEnabled, field.TypeBool, value)
+	}
+	if value, ok := su.mutation.CreatedAt(); ok {
+		_spec.SetField(subscription.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := su.mutation.UpdatedAt(); ok {
+		_spec.SetField(subscription.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if su.mutation.PostsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -241,6 +347,51 @@ func (su *SubscriptionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   subscription.MessagesTable,
+			Columns: []string{subscription.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedMessagesIDs(); len(nodes) > 0 && !su.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   subscription.MessagesTable,
+			Columns: []string{subscription.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.MessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   subscription.MessagesTable,
+			Columns: []string{subscription.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -298,9 +449,37 @@ func (suo *SubscriptionUpdateOne) SetHeadMarker(s string) *SubscriptionUpdateOne
 	return suo
 }
 
+// SetNillableHeadMarker sets the "head_marker" field if the given value is not nil.
+func (suo *SubscriptionUpdateOne) SetNillableHeadMarker(s *string) *SubscriptionUpdateOne {
+	if s != nil {
+		suo.SetHeadMarker(*s)
+	}
+	return suo
+}
+
+// ClearHeadMarker clears the value of the "head_marker" field.
+func (suo *SubscriptionUpdateOne) ClearHeadMarker() *SubscriptionUpdateOne {
+	suo.mutation.ClearHeadMarker()
+	return suo
+}
+
 // SetStashID sets the "stash_id" field.
 func (suo *SubscriptionUpdateOne) SetStashID(s string) *SubscriptionUpdateOne {
 	suo.mutation.SetStashID(s)
+	return suo
+}
+
+// SetNillableStashID sets the "stash_id" field if the given value is not nil.
+func (suo *SubscriptionUpdateOne) SetNillableStashID(s *string) *SubscriptionUpdateOne {
+	if s != nil {
+		suo.SetStashID(*s)
+	}
+	return suo
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (suo *SubscriptionUpdateOne) ClearStashID() *SubscriptionUpdateOne {
+	suo.mutation.ClearStashID()
 	return suo
 }
 
@@ -338,6 +517,26 @@ func (suo *SubscriptionUpdateOne) SetNillableEnabled(b *bool) *SubscriptionUpdat
 	return suo
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (suo *SubscriptionUpdateOne) SetCreatedAt(t time.Time) *SubscriptionUpdateOne {
+	suo.mutation.SetCreatedAt(t)
+	return suo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (suo *SubscriptionUpdateOne) SetNillableCreatedAt(t *time.Time) *SubscriptionUpdateOne {
+	if t != nil {
+		suo.SetCreatedAt(*t)
+	}
+	return suo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (suo *SubscriptionUpdateOne) SetUpdatedAt(t time.Time) *SubscriptionUpdateOne {
+	suo.mutation.SetUpdatedAt(t)
+	return suo
+}
+
 // AddPostIDs adds the "posts" edge to the Post entity by IDs.
 func (suo *SubscriptionUpdateOne) AddPostIDs(ids ...int) *SubscriptionUpdateOne {
 	suo.mutation.AddPostIDs(ids...)
@@ -351,6 +550,21 @@ func (suo *SubscriptionUpdateOne) AddPosts(p ...*Post) *SubscriptionUpdateOne {
 		ids[i] = p[i].ID
 	}
 	return suo.AddPostIDs(ids...)
+}
+
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (suo *SubscriptionUpdateOne) AddMessageIDs(ids ...int) *SubscriptionUpdateOne {
+	suo.mutation.AddMessageIDs(ids...)
+	return suo
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (suo *SubscriptionUpdateOne) AddMessages(m ...*Message) *SubscriptionUpdateOne {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return suo.AddMessageIDs(ids...)
 }
 
 // Mutation returns the SubscriptionMutation object of the builder.
@@ -379,6 +593,27 @@ func (suo *SubscriptionUpdateOne) RemovePosts(p ...*Post) *SubscriptionUpdateOne
 	return suo.RemovePostIDs(ids...)
 }
 
+// ClearMessages clears all "messages" edges to the Message entity.
+func (suo *SubscriptionUpdateOne) ClearMessages() *SubscriptionUpdateOne {
+	suo.mutation.ClearMessages()
+	return suo
+}
+
+// RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
+func (suo *SubscriptionUpdateOne) RemoveMessageIDs(ids ...int) *SubscriptionUpdateOne {
+	suo.mutation.RemoveMessageIDs(ids...)
+	return suo
+}
+
+// RemoveMessages removes "messages" edges to Message entities.
+func (suo *SubscriptionUpdateOne) RemoveMessages(m ...*Message) *SubscriptionUpdateOne {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return suo.RemoveMessageIDs(ids...)
+}
+
 // Where appends a list predicates to the SubscriptionUpdate builder.
 func (suo *SubscriptionUpdateOne) Where(ps ...predicate.Subscription) *SubscriptionUpdateOne {
 	suo.mutation.Where(ps...)
@@ -394,6 +629,7 @@ func (suo *SubscriptionUpdateOne) Select(field string, fields ...string) *Subscr
 
 // Save executes the query and returns the updated Subscription entity.
 func (suo *SubscriptionUpdateOne) Save(ctx context.Context) (*Subscription, error) {
+	suo.defaults()
 	return withHooks(ctx, suo.sqlSave, suo.mutation, suo.hooks)
 }
 
@@ -416,6 +652,14 @@ func (suo *SubscriptionUpdateOne) Exec(ctx context.Context) error {
 func (suo *SubscriptionUpdateOne) ExecX(ctx context.Context) {
 	if err := suo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (suo *SubscriptionUpdateOne) defaults() {
+	if _, ok := suo.mutation.UpdatedAt(); !ok {
+		v := subscription.UpdateDefaultUpdatedAt()
+		suo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -460,8 +704,14 @@ func (suo *SubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *Subscript
 	if value, ok := suo.mutation.HeadMarker(); ok {
 		_spec.SetField(subscription.FieldHeadMarker, field.TypeString, value)
 	}
+	if suo.mutation.HeadMarkerCleared() {
+		_spec.ClearField(subscription.FieldHeadMarker, field.TypeString)
+	}
 	if value, ok := suo.mutation.StashID(); ok {
 		_spec.SetField(subscription.FieldStashID, field.TypeString, value)
+	}
+	if suo.mutation.StashIDCleared() {
+		_spec.ClearField(subscription.FieldStashID, field.TypeString)
 	}
 	if value, ok := suo.mutation.OrganizedAt(); ok {
 		_spec.SetField(subscription.FieldOrganizedAt, field.TypeTime, value)
@@ -471,6 +721,12 @@ func (suo *SubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *Subscript
 	}
 	if value, ok := suo.mutation.Enabled(); ok {
 		_spec.SetField(subscription.FieldEnabled, field.TypeBool, value)
+	}
+	if value, ok := suo.mutation.CreatedAt(); ok {
+		_spec.SetField(subscription.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := suo.mutation.UpdatedAt(); ok {
+		_spec.SetField(subscription.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if suo.mutation.PostsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -510,6 +766,51 @@ func (suo *SubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *Subscript
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   subscription.MessagesTable,
+			Columns: []string{subscription.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedMessagesIDs(); len(nodes) > 0 && !suo.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   subscription.MessagesTable,
+			Columns: []string{subscription.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.MessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   subscription.MessagesTable,
+			Columns: []string{subscription.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

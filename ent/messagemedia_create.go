@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ofdl/ofdl/ent/message"
 	"github.com/ofdl/ofdl/ent/messagemedia"
 )
 
@@ -18,6 +20,7 @@ type MessageMediaCreate struct {
 	config
 	mutation *MessageMediaMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetMessageID sets the "message_id" field.
@@ -72,6 +75,11 @@ func (mmc *MessageMediaCreate) SetNillableOrganizedAt(t *time.Time) *MessageMedi
 	return mmc
 }
 
+// SetMessage sets the "message" edge to the Message entity.
+func (mmc *MessageMediaCreate) SetMessage(m *Message) *MessageMediaCreate {
+	return mmc.SetMessageID(m.ID)
+}
+
 // Mutation returns the MessageMediaMutation object of the builder.
 func (mmc *MessageMediaCreate) Mutation() *MessageMediaMutation {
 	return mmc.mutation
@@ -118,6 +126,9 @@ func (mmc *MessageMediaCreate) check() error {
 	if _, ok := mmc.mutation.StashID(); !ok {
 		return &ValidationError{Name: "stash_id", err: errors.New(`ent: missing required field "MessageMedia.stash_id"`)}
 	}
+	if _, ok := mmc.mutation.MessageID(); !ok {
+		return &ValidationError{Name: "message", err: errors.New(`ent: missing required edge "MessageMedia.message"`)}
+	}
 	return nil
 }
 
@@ -144,10 +155,7 @@ func (mmc *MessageMediaCreate) createSpec() (*MessageMedia, *sqlgraph.CreateSpec
 		_node = &MessageMedia{config: mmc.config}
 		_spec = sqlgraph.NewCreateSpec(messagemedia.Table, sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt))
 	)
-	if value, ok := mmc.mutation.MessageID(); ok {
-		_spec.SetField(messagemedia.FieldMessageID, field.TypeInt, value)
-		_node.MessageID = value
-	}
+	_spec.OnConflict = mmc.conflict
 	if value, ok := mmc.mutation.GetType(); ok {
 		_spec.SetField(messagemedia.FieldType, field.TypeString, value)
 		_node.Type = value
@@ -168,13 +176,335 @@ func (mmc *MessageMediaCreate) createSpec() (*MessageMedia, *sqlgraph.CreateSpec
 		_spec.SetField(messagemedia.FieldOrganizedAt, field.TypeTime, value)
 		_node.OrganizedAt = value
 	}
+	if nodes := mmc.mutation.MessageIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   messagemedia.MessageTable,
+			Columns: []string{messagemedia.MessageColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.MessageID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.MessageMedia.Create().
+//		SetMessageID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.MessageMediaUpsert) {
+//			SetMessageID(v+v).
+//		}).
+//		Exec(ctx)
+func (mmc *MessageMediaCreate) OnConflict(opts ...sql.ConflictOption) *MessageMediaUpsertOne {
+	mmc.conflict = opts
+	return &MessageMediaUpsertOne{
+		create: mmc,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.MessageMedia.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (mmc *MessageMediaCreate) OnConflictColumns(columns ...string) *MessageMediaUpsertOne {
+	mmc.conflict = append(mmc.conflict, sql.ConflictColumns(columns...))
+	return &MessageMediaUpsertOne{
+		create: mmc,
+	}
+}
+
+type (
+	// MessageMediaUpsertOne is the builder for "upsert"-ing
+	//  one MessageMedia node.
+	MessageMediaUpsertOne struct {
+		create *MessageMediaCreate
+	}
+
+	// MessageMediaUpsert is the "OnConflict" setter.
+	MessageMediaUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetMessageID sets the "message_id" field.
+func (u *MessageMediaUpsert) SetMessageID(v int) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldMessageID, v)
+	return u
+}
+
+// UpdateMessageID sets the "message_id" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateMessageID() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldMessageID)
+	return u
+}
+
+// SetType sets the "type" field.
+func (u *MessageMediaUpsert) SetType(v string) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldType, v)
+	return u
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateType() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldType)
+	return u
+}
+
+// SetFull sets the "full" field.
+func (u *MessageMediaUpsert) SetFull(v string) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldFull, v)
+	return u
+}
+
+// UpdateFull sets the "full" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateFull() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldFull)
+	return u
+}
+
+// SetDownloadedAt sets the "downloaded_at" field.
+func (u *MessageMediaUpsert) SetDownloadedAt(v time.Time) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldDownloadedAt, v)
+	return u
+}
+
+// UpdateDownloadedAt sets the "downloaded_at" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateDownloadedAt() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldDownloadedAt)
+	return u
+}
+
+// ClearDownloadedAt clears the value of the "downloaded_at" field.
+func (u *MessageMediaUpsert) ClearDownloadedAt() *MessageMediaUpsert {
+	u.SetNull(messagemedia.FieldDownloadedAt)
+	return u
+}
+
+// SetStashID sets the "stash_id" field.
+func (u *MessageMediaUpsert) SetStashID(v string) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldStashID, v)
+	return u
+}
+
+// UpdateStashID sets the "stash_id" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateStashID() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldStashID)
+	return u
+}
+
+// SetOrganizedAt sets the "organized_at" field.
+func (u *MessageMediaUpsert) SetOrganizedAt(v time.Time) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldOrganizedAt, v)
+	return u
+}
+
+// UpdateOrganizedAt sets the "organized_at" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateOrganizedAt() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldOrganizedAt)
+	return u
+}
+
+// ClearOrganizedAt clears the value of the "organized_at" field.
+func (u *MessageMediaUpsert) ClearOrganizedAt() *MessageMediaUpsert {
+	u.SetNull(messagemedia.FieldOrganizedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// Using this option is equivalent to using:
+//
+//	client.MessageMedia.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *MessageMediaUpsertOne) UpdateNewValues() *MessageMediaUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.MessageMedia.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *MessageMediaUpsertOne) Ignore() *MessageMediaUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *MessageMediaUpsertOne) DoNothing() *MessageMediaUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the MessageMediaCreate.OnConflict
+// documentation for more info.
+func (u *MessageMediaUpsertOne) Update(set func(*MessageMediaUpsert)) *MessageMediaUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&MessageMediaUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetMessageID sets the "message_id" field.
+func (u *MessageMediaUpsertOne) SetMessageID(v int) *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetMessageID(v)
+	})
+}
+
+// UpdateMessageID sets the "message_id" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateMessageID() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateMessageID()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *MessageMediaUpsertOne) SetType(v string) *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateType() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetFull sets the "full" field.
+func (u *MessageMediaUpsertOne) SetFull(v string) *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetFull(v)
+	})
+}
+
+// UpdateFull sets the "full" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateFull() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateFull()
+	})
+}
+
+// SetDownloadedAt sets the "downloaded_at" field.
+func (u *MessageMediaUpsertOne) SetDownloadedAt(v time.Time) *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetDownloadedAt(v)
+	})
+}
+
+// UpdateDownloadedAt sets the "downloaded_at" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateDownloadedAt() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateDownloadedAt()
+	})
+}
+
+// ClearDownloadedAt clears the value of the "downloaded_at" field.
+func (u *MessageMediaUpsertOne) ClearDownloadedAt() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.ClearDownloadedAt()
+	})
+}
+
+// SetStashID sets the "stash_id" field.
+func (u *MessageMediaUpsertOne) SetStashID(v string) *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetStashID(v)
+	})
+}
+
+// UpdateStashID sets the "stash_id" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateStashID() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateStashID()
+	})
+}
+
+// SetOrganizedAt sets the "organized_at" field.
+func (u *MessageMediaUpsertOne) SetOrganizedAt(v time.Time) *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetOrganizedAt(v)
+	})
+}
+
+// UpdateOrganizedAt sets the "organized_at" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateOrganizedAt() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateOrganizedAt()
+	})
+}
+
+// ClearOrganizedAt clears the value of the "organized_at" field.
+func (u *MessageMediaUpsertOne) ClearOrganizedAt() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.ClearOrganizedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *MessageMediaUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for MessageMediaCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *MessageMediaUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *MessageMediaUpsertOne) ID(ctx context.Context) (id int, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *MessageMediaUpsertOne) IDX(ctx context.Context) int {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
 }
 
 // MessageMediaCreateBulk is the builder for creating many MessageMedia entities in bulk.
 type MessageMediaCreateBulk struct {
 	config
 	builders []*MessageMediaCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the MessageMedia entities in the database.
@@ -200,6 +530,7 @@ func (mmcb *MessageMediaCreateBulk) Save(ctx context.Context) ([]*MessageMedia, 
 					_, err = mutators[i+1].Mutate(root, mmcb.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = mmcb.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, mmcb.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -250,6 +581,205 @@ func (mmcb *MessageMediaCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (mmcb *MessageMediaCreateBulk) ExecX(ctx context.Context) {
 	if err := mmcb.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.MessageMedia.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.MessageMediaUpsert) {
+//			SetMessageID(v+v).
+//		}).
+//		Exec(ctx)
+func (mmcb *MessageMediaCreateBulk) OnConflict(opts ...sql.ConflictOption) *MessageMediaUpsertBulk {
+	mmcb.conflict = opts
+	return &MessageMediaUpsertBulk{
+		create: mmcb,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.MessageMedia.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (mmcb *MessageMediaCreateBulk) OnConflictColumns(columns ...string) *MessageMediaUpsertBulk {
+	mmcb.conflict = append(mmcb.conflict, sql.ConflictColumns(columns...))
+	return &MessageMediaUpsertBulk{
+		create: mmcb,
+	}
+}
+
+// MessageMediaUpsertBulk is the builder for "upsert"-ing
+// a bulk of MessageMedia nodes.
+type MessageMediaUpsertBulk struct {
+	create *MessageMediaCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.MessageMedia.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *MessageMediaUpsertBulk) UpdateNewValues() *MessageMediaUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.MessageMedia.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *MessageMediaUpsertBulk) Ignore() *MessageMediaUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *MessageMediaUpsertBulk) DoNothing() *MessageMediaUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the MessageMediaCreateBulk.OnConflict
+// documentation for more info.
+func (u *MessageMediaUpsertBulk) Update(set func(*MessageMediaUpsert)) *MessageMediaUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&MessageMediaUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetMessageID sets the "message_id" field.
+func (u *MessageMediaUpsertBulk) SetMessageID(v int) *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetMessageID(v)
+	})
+}
+
+// UpdateMessageID sets the "message_id" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateMessageID() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateMessageID()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *MessageMediaUpsertBulk) SetType(v string) *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateType() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetFull sets the "full" field.
+func (u *MessageMediaUpsertBulk) SetFull(v string) *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetFull(v)
+	})
+}
+
+// UpdateFull sets the "full" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateFull() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateFull()
+	})
+}
+
+// SetDownloadedAt sets the "downloaded_at" field.
+func (u *MessageMediaUpsertBulk) SetDownloadedAt(v time.Time) *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetDownloadedAt(v)
+	})
+}
+
+// UpdateDownloadedAt sets the "downloaded_at" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateDownloadedAt() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateDownloadedAt()
+	})
+}
+
+// ClearDownloadedAt clears the value of the "downloaded_at" field.
+func (u *MessageMediaUpsertBulk) ClearDownloadedAt() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.ClearDownloadedAt()
+	})
+}
+
+// SetStashID sets the "stash_id" field.
+func (u *MessageMediaUpsertBulk) SetStashID(v string) *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetStashID(v)
+	})
+}
+
+// UpdateStashID sets the "stash_id" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateStashID() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateStashID()
+	})
+}
+
+// SetOrganizedAt sets the "organized_at" field.
+func (u *MessageMediaUpsertBulk) SetOrganizedAt(v time.Time) *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetOrganizedAt(v)
+	})
+}
+
+// UpdateOrganizedAt sets the "organized_at" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateOrganizedAt() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateOrganizedAt()
+	})
+}
+
+// ClearOrganizedAt clears the value of the "organized_at" field.
+func (u *MessageMediaUpsertBulk) ClearOrganizedAt() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.ClearOrganizedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *MessageMediaUpsertBulk) Exec(ctx context.Context) error {
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the MessageMediaCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for MessageMediaCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *MessageMediaUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -95,6 +95,16 @@ func Enabled(v bool) predicate.Subscription {
 	return predicate.Subscription(sql.FieldEQ(FieldEnabled, v))
 }
 
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
+func UpdatedAt(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
 // AvatarEQ applies the EQ predicate on the "avatar" field.
 func AvatarEQ(v string) predicate.Subscription {
 	return predicate.Subscription(sql.FieldEQ(FieldAvatar, v))
@@ -410,6 +420,16 @@ func HeadMarkerHasSuffix(v string) predicate.Subscription {
 	return predicate.Subscription(sql.FieldHasSuffix(FieldHeadMarker, v))
 }
 
+// HeadMarkerIsNil applies the IsNil predicate on the "head_marker" field.
+func HeadMarkerIsNil() predicate.Subscription {
+	return predicate.Subscription(sql.FieldIsNull(FieldHeadMarker))
+}
+
+// HeadMarkerNotNil applies the NotNil predicate on the "head_marker" field.
+func HeadMarkerNotNil() predicate.Subscription {
+	return predicate.Subscription(sql.FieldNotNull(FieldHeadMarker))
+}
+
 // HeadMarkerEqualFold applies the EqualFold predicate on the "head_marker" field.
 func HeadMarkerEqualFold(v string) predicate.Subscription {
 	return predicate.Subscription(sql.FieldEqualFold(FieldHeadMarker, v))
@@ -473,6 +493,16 @@ func StashIDHasPrefix(v string) predicate.Subscription {
 // StashIDHasSuffix applies the HasSuffix predicate on the "stash_id" field.
 func StashIDHasSuffix(v string) predicate.Subscription {
 	return predicate.Subscription(sql.FieldHasSuffix(FieldStashID, v))
+}
+
+// StashIDIsNil applies the IsNil predicate on the "stash_id" field.
+func StashIDIsNil() predicate.Subscription {
+	return predicate.Subscription(sql.FieldIsNull(FieldStashID))
+}
+
+// StashIDNotNil applies the NotNil predicate on the "stash_id" field.
+func StashIDNotNil() predicate.Subscription {
+	return predicate.Subscription(sql.FieldNotNull(FieldStashID))
 }
 
 // StashIDEqualFold applies the EqualFold predicate on the "stash_id" field.
@@ -545,6 +575,86 @@ func EnabledNEQ(v bool) predicate.Subscription {
 	return predicate.Subscription(sql.FieldNEQ(FieldEnabled, v))
 }
 
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldNEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldNotIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldGT(FieldCreatedAt, v))
+}
+
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldGTE(FieldCreatedAt, v))
+}
+
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldLT(FieldCreatedAt, v))
+}
+
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldLTE(FieldCreatedAt, v))
+}
+
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
+func UpdatedAtEQ(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
+func UpdatedAtNEQ(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldNEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
+func UpdatedAtIn(vs ...time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
+func UpdatedAtNotIn(vs ...time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldNotIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
+func UpdatedAtGT(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldGT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
+func UpdatedAtGTE(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldGTE(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
+func UpdatedAtLT(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldLT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
+func UpdatedAtLTE(v time.Time) predicate.Subscription {
+	return predicate.Subscription(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
 // HasPosts applies the HasEdge predicate on the "posts" edge.
 func HasPosts() predicate.Subscription {
 	return predicate.Subscription(func(s *sql.Selector) {
@@ -560,6 +670,29 @@ func HasPosts() predicate.Subscription {
 func HasPostsWith(preds ...predicate.Post) predicate.Subscription {
 	return predicate.Subscription(func(s *sql.Selector) {
 		step := newPostsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasMessages applies the HasEdge predicate on the "messages" edge.
+func HasMessages() predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, MessagesTable, MessagesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMessagesWith applies the HasEdge predicate on the "messages" edge with a given conditions (other predicates).
+func HasMessagesWith(preds ...predicate.Message) predicate.Subscription {
+	return predicate.Subscription(func(s *sql.Selector) {
+		step := newMessagesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

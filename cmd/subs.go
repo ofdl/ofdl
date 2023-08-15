@@ -17,19 +17,13 @@ you're tracking here.
 	`,
 	PersistentPreRunE: UseOFDL,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		s, err := OFDL.Data.GetSubscriptions()
-		if err != nil {
-			return err
-		}
-
-		App.ProvideValue(s)
 		var g *gui.SubsGUI
 		if err := App.Resolve(&g); err != nil {
 			return err
 		}
 
 		p := tea.NewProgram(g)
-		_, err = p.Run()
+		_, err := p.Run()
 		return err
 	},
 }

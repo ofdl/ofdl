@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/ofdl/ofdl/ent/message"
 	"github.com/ofdl/ofdl/ent/messagemedia"
 	"github.com/ofdl/ofdl/ent/predicate"
 )
@@ -30,14 +31,7 @@ func (mmu *MessageMediaUpdate) Where(ps ...predicate.MessageMedia) *MessageMedia
 
 // SetMessageID sets the "message_id" field.
 func (mmu *MessageMediaUpdate) SetMessageID(i int) *MessageMediaUpdate {
-	mmu.mutation.ResetMessageID()
 	mmu.mutation.SetMessageID(i)
-	return mmu
-}
-
-// AddMessageID adds i to the "message_id" field.
-func (mmu *MessageMediaUpdate) AddMessageID(i int) *MessageMediaUpdate {
-	mmu.mutation.AddMessageID(i)
 	return mmu
 }
 
@@ -99,9 +93,20 @@ func (mmu *MessageMediaUpdate) ClearOrganizedAt() *MessageMediaUpdate {
 	return mmu
 }
 
+// SetMessage sets the "message" edge to the Message entity.
+func (mmu *MessageMediaUpdate) SetMessage(m *Message) *MessageMediaUpdate {
+	return mmu.SetMessageID(m.ID)
+}
+
 // Mutation returns the MessageMediaMutation object of the builder.
 func (mmu *MessageMediaUpdate) Mutation() *MessageMediaMutation {
 	return mmu.mutation
+}
+
+// ClearMessage clears the "message" edge to the Message entity.
+func (mmu *MessageMediaUpdate) ClearMessage() *MessageMediaUpdate {
+	mmu.mutation.ClearMessage()
+	return mmu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -131,7 +136,18 @@ func (mmu *MessageMediaUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (mmu *MessageMediaUpdate) check() error {
+	if _, ok := mmu.mutation.MessageID(); mmu.mutation.MessageCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "MessageMedia.message"`)
+	}
+	return nil
+}
+
 func (mmu *MessageMediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := mmu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(messagemedia.Table, messagemedia.Columns, sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt))
 	if ps := mmu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -139,12 +155,6 @@ func (mmu *MessageMediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := mmu.mutation.MessageID(); ok {
-		_spec.SetField(messagemedia.FieldMessageID, field.TypeInt, value)
-	}
-	if value, ok := mmu.mutation.AddedMessageID(); ok {
-		_spec.AddField(messagemedia.FieldMessageID, field.TypeInt, value)
 	}
 	if value, ok := mmu.mutation.GetType(); ok {
 		_spec.SetField(messagemedia.FieldType, field.TypeString, value)
@@ -166,6 +176,35 @@ func (mmu *MessageMediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if mmu.mutation.OrganizedAtCleared() {
 		_spec.ClearField(messagemedia.FieldOrganizedAt, field.TypeTime)
+	}
+	if mmu.mutation.MessageCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   messagemedia.MessageTable,
+			Columns: []string{messagemedia.MessageColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mmu.mutation.MessageIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   messagemedia.MessageTable,
+			Columns: []string{messagemedia.MessageColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mmu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -189,14 +228,7 @@ type MessageMediaUpdateOne struct {
 
 // SetMessageID sets the "message_id" field.
 func (mmuo *MessageMediaUpdateOne) SetMessageID(i int) *MessageMediaUpdateOne {
-	mmuo.mutation.ResetMessageID()
 	mmuo.mutation.SetMessageID(i)
-	return mmuo
-}
-
-// AddMessageID adds i to the "message_id" field.
-func (mmuo *MessageMediaUpdateOne) AddMessageID(i int) *MessageMediaUpdateOne {
-	mmuo.mutation.AddMessageID(i)
 	return mmuo
 }
 
@@ -258,9 +290,20 @@ func (mmuo *MessageMediaUpdateOne) ClearOrganizedAt() *MessageMediaUpdateOne {
 	return mmuo
 }
 
+// SetMessage sets the "message" edge to the Message entity.
+func (mmuo *MessageMediaUpdateOne) SetMessage(m *Message) *MessageMediaUpdateOne {
+	return mmuo.SetMessageID(m.ID)
+}
+
 // Mutation returns the MessageMediaMutation object of the builder.
 func (mmuo *MessageMediaUpdateOne) Mutation() *MessageMediaMutation {
 	return mmuo.mutation
+}
+
+// ClearMessage clears the "message" edge to the Message entity.
+func (mmuo *MessageMediaUpdateOne) ClearMessage() *MessageMediaUpdateOne {
+	mmuo.mutation.ClearMessage()
+	return mmuo
 }
 
 // Where appends a list predicates to the MessageMediaUpdate builder.
@@ -303,7 +346,18 @@ func (mmuo *MessageMediaUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (mmuo *MessageMediaUpdateOne) check() error {
+	if _, ok := mmuo.mutation.MessageID(); mmuo.mutation.MessageCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "MessageMedia.message"`)
+	}
+	return nil
+}
+
 func (mmuo *MessageMediaUpdateOne) sqlSave(ctx context.Context) (_node *MessageMedia, err error) {
+	if err := mmuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(messagemedia.Table, messagemedia.Columns, sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt))
 	id, ok := mmuo.mutation.ID()
 	if !ok {
@@ -329,12 +383,6 @@ func (mmuo *MessageMediaUpdateOne) sqlSave(ctx context.Context) (_node *MessageM
 			}
 		}
 	}
-	if value, ok := mmuo.mutation.MessageID(); ok {
-		_spec.SetField(messagemedia.FieldMessageID, field.TypeInt, value)
-	}
-	if value, ok := mmuo.mutation.AddedMessageID(); ok {
-		_spec.AddField(messagemedia.FieldMessageID, field.TypeInt, value)
-	}
 	if value, ok := mmuo.mutation.GetType(); ok {
 		_spec.SetField(messagemedia.FieldType, field.TypeString, value)
 	}
@@ -355,6 +403,35 @@ func (mmuo *MessageMediaUpdateOne) sqlSave(ctx context.Context) (_node *MessageM
 	}
 	if mmuo.mutation.OrganizedAtCleared() {
 		_spec.ClearField(messagemedia.FieldOrganizedAt, field.TypeTime)
+	}
+	if mmuo.mutation.MessageCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   messagemedia.MessageTable,
+			Columns: []string{messagemedia.MessageColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mmuo.mutation.MessageIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   messagemedia.MessageTable,
+			Columns: []string{messagemedia.MessageColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &MessageMedia{config: mmuo.config}
 	_spec.Assign = _node.assignValues
