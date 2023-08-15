@@ -1,26 +1,33 @@
 package gui
 
 import (
+	"context"
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/ofdl/ofdl/model"
-	"gorm.io/gorm"
+	"github.com/ofdl/ofdl/ent"
 )
 
 type SubsGUI struct {
-	db     *gorm.DB
-	subs   []*model.Subscription
+	ctx    context.Context
+	ent    *ent.Client
+	subs   []*ent.Subscription
 	cursor int
 	msg    string
 }
 
-func NewSubsGui(db *gorm.DB, subs []*model.Subscription) *SubsGUI {
+func NewSubsGui(ctx context.Context, ent *ent.Client) (*SubsGUI, error) {
+	subs, err := ent.Subscription.Query().All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &SubsGUI{
-		db:     db,
+		ctx:    ctx,
+		ent:    ent,
 		subs:   subs,
 		cursor: 0,
-	}
+	}, nil
 }
 
 func (s SubsGUI) Init() tea.Cmd {
@@ -43,10 +50,11 @@ func (s SubsGUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "enter", " ":
 			sub := s.subs[s.cursor]
-			sub.Enabled = !sub.Enabled
-			if err := s.db.Save(sub).Error; err != nil {
+			sub, err := sub.Update().SetEnabled(!sub.Enabled).Save(s.ctx)
+			if err != nil {
 				return s, tea.Quit
 			}
+			s.subs[s.cursor] = sub
 
 			verb := "enabled"
 			if !sub.Enabled {

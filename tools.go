@@ -2,4 +2,7 @@
 
 package tools
 
-import _ "github.com/goreleaser/goreleaser"
+import (
+	_ "entgo.io/ent/cmd/ent"
+	_ "github.com/goreleaser/goreleaser"
+)

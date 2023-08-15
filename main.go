@@ -8,6 +8,7 @@ import (
 	"github.com/defval/di"
 	"github.com/ofdl/ofdl/cmd"
 	"github.com/ofdl/ofdl/cmd/gui"
+	"github.com/ofdl/ofdl/ent"
 	"github.com/ofdl/ofdl/model"
 	"github.com/ofdl/ofdl/model/query"
 	"github.com/ofdl/ofdl/ofdl"
@@ -30,6 +31,7 @@ func main() {
 		}),
 
 		di.Provide(gui.NewSubsGui),
+		di.Provide(ent.NewEntClient),
 	)
 	if err != nil {
 		fmt.Println(err)
