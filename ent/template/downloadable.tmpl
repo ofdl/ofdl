@@ -1,0 +1,30 @@
+{{ define "model/additional/downloadable" }}
+  {{- if eq $.Name "Media" }}
+    // URL returns the URL of the downloadable media
+    func (m *Media) URL() string {
+      return m.Full
+    }
+
+    func (m *Media) Directory() string {
+      return fmt.Sprintf("/%s/posts/%d", m.Edges.Post.Edges.Subscription.Username, m.Edges.Post.ID)
+    }
+  {{- end }}
+
+  {{- if eq $.Name "MessageMedia" }}
+    // URL returns the URL of the downloadable media
+    func (m *MessageMedia) URL() string {
+      return m.Src
+    }
+
+    func (m MessageMedia) Directory() string {
+	    return fmt.Sprintf("/%s/messages/%d", m.Edges.Message.Edges.Subscription.Username, m.Edges.Message.ID)
+    }
+  {{- end }}
+
+  {{- if or (eq $.Name "Media") (eq $.Name "MessageMedia") }}
+    func ({{ $.Receiver }} *{{ $.Name }}) Filename() string {
+      u, _ := url.Parse(m.URL())
+      return path.Base(u.Path)
+    }
+  {{- end }}
+{{ end }}

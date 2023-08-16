@@ -19,7 +19,9 @@ func (Media) Fields() []ent.Field {
 		field.Int("id").Positive().Unique(),
 		field.Int("post_id"),
 		field.String("type"),
-		field.String("full"),
+		field.String("full").Optional(),
+		field.String("posted_at"),
+
 		field.Time("downloaded_at").Optional(),
 		field.String("stash_id").Optional(),
 		field.Time("organized_at").Optional(),

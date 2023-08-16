@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"github.com/ofdl/ofdl/ent/media"
+	"github.com/ofdl/ofdl/ent/messagemedia"
+	"github.com/ofdl/ofdl/ofdl/downloader"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -41,13 +44,13 @@ var downloadPostsCmd = &cobra.Command{
 	Short:   "Download media posts",
 	Aliases: []string{"media", "mp"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		missing, err := OFDL.GetMissingMedia(viper.GetInt("downloads.batch-size"))
+		missing, err := OFDL.Ent.Media.Query().Where(media.DownloadedAtIsNil()).Limit(viper.GetInt("downloads.batch-size")).All(cmd.Context())
 		if err != nil {
 			return err
 		}
 
 		bar := progressbar.Default(int64(len(missing)), "Downloading media")
-		progress := OFDL.Downloader.DownloadMany(missing)
+		progress := OFDL.Downloader.DownloadMany(downloader.ToDownloadableSlice(missing))
 		for err := range progress {
 			if err != nil {
 				return err
@@ -64,13 +67,13 @@ var downloadMessagesCmd = &cobra.Command{
 	Short:   "Download messages",
 	Aliases: []string{"msg"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		missing, err := OFDL.GetMissingMessageMedia(viper.GetInt("downloads.batch-size"))
+		missing, err := OFDL.Ent.MessageMedia.Query().Where(messagemedia.DownloadedAtIsNil()).Limit(viper.GetInt("downloads.batch-size")).All(cmd.Context())
 		if err != nil {
 			return err
 		}
 
 		bar := progressbar.Default(int64(len(missing)), "Downloading message media")
-		progress := OFDL.Downloader.DownloadMany(missing)
+		progress := OFDL.Downloader.DownloadMany(downloader.ToDownloadableSlice(missing))
 		for err := range progress {
 			if err != nil {
 				return err

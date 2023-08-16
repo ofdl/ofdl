@@ -41,6 +41,12 @@ func (mc *MessageCreate) SetPostedAt(s string) *MessageCreate {
 	return mc
 }
 
+// SetID sets the "id" field.
+func (mc *MessageCreate) SetID(i int) *MessageCreate {
+	mc.mutation.SetID(i)
+	return mc
+}
+
 // AddMediumIDs adds the "media" edge to the MessageMedia entity by IDs.
 func (mc *MessageCreate) AddMediumIDs(ids ...int) *MessageCreate {
 	mc.mutation.AddMediumIDs(ids...)
@@ -104,6 +110,11 @@ func (mc *MessageCreate) check() error {
 	if _, ok := mc.mutation.PostedAt(); !ok {
 		return &ValidationError{Name: "posted_at", err: errors.New(`ent: missing required field "Message.posted_at"`)}
 	}
+	if v, ok := mc.mutation.ID(); ok {
+		if err := message.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Message.id": %w`, err)}
+		}
+	}
 	if _, ok := mc.mutation.SubscriptionID(); !ok {
 		return &ValidationError{Name: "subscription", err: errors.New(`ent: missing required edge "Message.subscription"`)}
 	}
@@ -121,8 +132,10 @@ func (mc *MessageCreate) sqlSave(ctx context.Context) (*Message, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int(id)
+	}
 	mc.mutation.id = &_node.ID
 	mc.mutation.done = true
 	return _node, nil
@@ -134,6 +147,10 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(message.Table, sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt))
 	)
 	_spec.OnConflict = mc.conflict
+	if id, ok := mc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := mc.mutation.Text(); ok {
 		_spec.SetField(message.FieldText, field.TypeString, value)
 		_node.Text = value
@@ -263,16 +280,24 @@ func (u *MessageUpsert) UpdatePostedAt() *MessageUpsert {
 	return u
 }
 
-// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
 //	client.Message.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(message.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *MessageUpsertOne) UpdateNewValues() *MessageUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(message.FieldID)
+		}
+	}))
 	return u
 }
 
@@ -420,7 +445,7 @@ func (mcb *MessageCreateBulk) Save(ctx context.Context) ([]*Message, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int(id)
 				}
@@ -510,10 +535,20 @@ type MessageUpsertBulk struct {
 //	client.Message.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(message.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *MessageUpsertBulk) UpdateNewValues() *MessageUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(message.FieldID)
+			}
+		}
+	}))
 	return u
 }
 

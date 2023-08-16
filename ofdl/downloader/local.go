@@ -5,32 +5,27 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-
-	"github.com/ofdl/ofdl/model"
-	"gorm.io/gorm"
 )
 
 type LocalDownloader struct {
-	db   *gorm.DB
 	root string
 }
 
-func NewLocalDownloader(db *gorm.DB, root string) (Downloader, error) {
+func NewLocalDownloader(root string) (Downloader, error) {
 	return &LocalDownloader{
-		db:   db,
 		root: root,
 	}, nil
 }
 
 // DownloadMany implements Downloader.
-func (d *LocalDownloader) DownloadMany(mm []model.DownloadableMedia) <-chan error {
+func (d *LocalDownloader) DownloadMany(mm []Downloadable) <-chan error {
 	d1 := make(chan error)
 
 	go func() {
 		sem := make(chan struct{}, 5)
 		for _, m := range mm {
 			sem <- struct{}{}
-			go func(m model.DownloadableMedia) {
+			go func(m Downloadable) {
 				defer func() { <-sem }()
 
 				p, done := d.DownloadOne(m)
@@ -54,7 +49,7 @@ func (d *LocalDownloader) DownloadMany(mm []model.DownloadableMedia) <-chan erro
 }
 
 // DownloadOne implements Downloader.
-func (d *LocalDownloader) DownloadOne(m model.DownloadableMedia) (<-chan float64, <-chan error) {
+func (d *LocalDownloader) DownloadOne(m Downloadable) (<-chan float64, <-chan error) {
 	progress := make(chan float64)
 	done := make(chan error)
 
@@ -62,7 +57,7 @@ func (d *LocalDownloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 		defer close(progress)
 
 		if m.URL() == "" {
-			done <- m.MarkDownloaded(d.db)
+			done <- nil
 			return
 		}
 
@@ -93,7 +88,7 @@ func (d *LocalDownloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 			return
 		}
 
-		done <- m.MarkDownloaded(d.db)
+		done <- nil
 	}()
 
 	return progress, done

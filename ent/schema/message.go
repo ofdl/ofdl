@@ -14,6 +14,7 @@ type Message struct {
 // Fields of the Message.
 func (Message) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("id").Positive().Unique(),
 		field.Int("subscription_id"),
 		field.String("text"),
 		field.String("posted_at"),

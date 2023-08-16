@@ -12,7 +12,8 @@ var (
 	MediaColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "type", Type: field.TypeString},
-		{Name: "full", Type: field.TypeString},
+		{Name: "full", Type: field.TypeString, Nullable: true},
+		{Name: "posted_at", Type: field.TypeString},
 		{Name: "downloaded_at", Type: field.TypeTime, Nullable: true},
 		{Name: "stash_id", Type: field.TypeString, Nullable: true},
 		{Name: "organized_at", Type: field.TypeTime, Nullable: true},
@@ -28,7 +29,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "media_posts_medias",
-				Columns:    []*schema.Column{MediaColumns[8]},
+				Columns:    []*schema.Column{MediaColumns[9]},
 				RefColumns: []*schema.Column{PostsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -59,10 +60,12 @@ var (
 	MessageMediaColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "type", Type: field.TypeString},
-		{Name: "full", Type: field.TypeString},
+		{Name: "src", Type: field.TypeString, Nullable: true},
 		{Name: "downloaded_at", Type: field.TypeTime, Nullable: true},
 		{Name: "stash_id", Type: field.TypeString},
 		{Name: "organized_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "message_id", Type: field.TypeInt},
 	}
 	// MessageMediaTable holds the schema information for the "message_media" table.
@@ -73,7 +76,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "message_media_messages_media",
-				Columns:    []*schema.Column{MessageMediaColumns[6]},
+				Columns:    []*schema.Column{MessageMediaColumns[8]},
 				RefColumns: []*schema.Column{MessagesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

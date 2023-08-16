@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/ofdl/ofdl/ent/media"
+	"github.com/ofdl/ofdl/ent/message"
+	"github.com/ofdl/ofdl/ent/messagemedia"
 	"github.com/ofdl/ofdl/ent/post"
 	"github.com/ofdl/ofdl/ent/schema"
 	"github.com/ofdl/ofdl/ent/subscription"
@@ -18,11 +20,11 @@ func init() {
 	mediaFields := schema.Media{}.Fields()
 	_ = mediaFields
 	// mediaDescCreatedAt is the schema descriptor for created_at field.
-	mediaDescCreatedAt := mediaFields[7].Descriptor()
+	mediaDescCreatedAt := mediaFields[8].Descriptor()
 	// media.DefaultCreatedAt holds the default value on creation for the created_at field.
 	media.DefaultCreatedAt = mediaDescCreatedAt.Default.(func() time.Time)
 	// mediaDescUpdatedAt is the schema descriptor for updated_at field.
-	mediaDescUpdatedAt := mediaFields[8].Descriptor()
+	mediaDescUpdatedAt := mediaFields[9].Descriptor()
 	// media.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	media.DefaultUpdatedAt = mediaDescUpdatedAt.Default.(func() time.Time)
 	// media.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -31,6 +33,28 @@ func init() {
 	mediaDescID := mediaFields[0].Descriptor()
 	// media.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	media.IDValidator = mediaDescID.Validators[0].(func(int) error)
+	messageFields := schema.Message{}.Fields()
+	_ = messageFields
+	// messageDescID is the schema descriptor for id field.
+	messageDescID := messageFields[0].Descriptor()
+	// message.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	message.IDValidator = messageDescID.Validators[0].(func(int) error)
+	messagemediaFields := schema.MessageMedia{}.Fields()
+	_ = messagemediaFields
+	// messagemediaDescCreatedAt is the schema descriptor for created_at field.
+	messagemediaDescCreatedAt := messagemediaFields[7].Descriptor()
+	// messagemedia.DefaultCreatedAt holds the default value on creation for the created_at field.
+	messagemedia.DefaultCreatedAt = messagemediaDescCreatedAt.Default.(func() time.Time)
+	// messagemediaDescUpdatedAt is the schema descriptor for updated_at field.
+	messagemediaDescUpdatedAt := messagemediaFields[8].Descriptor()
+	// messagemedia.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	messagemedia.DefaultUpdatedAt = messagemediaDescUpdatedAt.Default.(func() time.Time)
+	// messagemedia.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	messagemedia.UpdateDefaultUpdatedAt = messagemediaDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// messagemediaDescID is the schema descriptor for id field.
+	messagemediaDescID := messagemediaFields[0].Descriptor()
+	// messagemedia.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	messagemedia.IDValidator = messagemediaDescID.Validators[0].(func(int) error)
 	postFields := schema.Post{}.Fields()
 	_ = postFields
 	// postDescCreatedAt is the schema descriptor for created_at field.

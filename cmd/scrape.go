@@ -207,11 +207,40 @@ database.
 
 				// Save Messages
 				for _, m := range page.List {
-					// if err := OFDL.Data.SaveMessage(sub.ID, m); err != nil {
-					// 	return err
-					// }
-					bar.Add(1)
+					messageId, err := OFDL.Ent.Message.Create().
+						SetID(m.ID).
+						SetSubscriptionID(sub.ID).
+						SetText(m.Text).
+						SetPostedAt(m.CreatedAt).
+						OnConflict().UpdateNewValues().
+						ID(cmd.Context())
+					if err != nil {
+						return err
+					}
 
+					mc := []*ent.MessageMediaCreate{}
+					for _, v := range m.Media {
+						if !v.CanView {
+							continue
+						}
+
+						m := OFDL.Ent.MessageMedia.Create().
+							SetID(v.ID).
+							SetMessageID(messageId).
+							SetType(v.Type)
+
+						if v.Src != nil {
+							m.SetSrc(*v.Src)
+						}
+
+						mc = append(mc, m)
+					}
+
+					if err := OFDL.Ent.MessageMedia.CreateBulk(mc...).OnConflict().UpdateNewValues().Exec(cmd.Context()); err != nil {
+						return err
+					}
+
+					bar.Add(1)
 					nextId = &m.ID
 				}
 			}

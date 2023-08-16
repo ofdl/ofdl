@@ -47,6 +47,26 @@ func (mu *MediaUpdate) SetFull(s string) *MediaUpdate {
 	return mu
 }
 
+// SetNillableFull sets the "full" field if the given value is not nil.
+func (mu *MediaUpdate) SetNillableFull(s *string) *MediaUpdate {
+	if s != nil {
+		mu.SetFull(*s)
+	}
+	return mu
+}
+
+// ClearFull clears the value of the "full" field.
+func (mu *MediaUpdate) ClearFull() *MediaUpdate {
+	mu.mutation.ClearFull()
+	return mu
+}
+
+// SetPostedAt sets the "posted_at" field.
+func (mu *MediaUpdate) SetPostedAt(s string) *MediaUpdate {
+	mu.mutation.SetPostedAt(s)
+	return mu
+}
+
 // SetDownloadedAt sets the "downloaded_at" field.
 func (mu *MediaUpdate) SetDownloadedAt(t time.Time) *MediaUpdate {
 	mu.mutation.SetDownloadedAt(t)
@@ -205,6 +225,12 @@ func (mu *MediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := mu.mutation.Full(); ok {
 		_spec.SetField(media.FieldFull, field.TypeString, value)
 	}
+	if mu.mutation.FullCleared() {
+		_spec.ClearField(media.FieldFull, field.TypeString)
+	}
+	if value, ok := mu.mutation.PostedAt(); ok {
+		_spec.SetField(media.FieldPostedAt, field.TypeString, value)
+	}
 	if value, ok := mu.mutation.DownloadedAt(); ok {
 		_spec.SetField(media.FieldDownloadedAt, field.TypeTime, value)
 	}
@@ -293,6 +319,26 @@ func (muo *MediaUpdateOne) SetType(s string) *MediaUpdateOne {
 // SetFull sets the "full" field.
 func (muo *MediaUpdateOne) SetFull(s string) *MediaUpdateOne {
 	muo.mutation.SetFull(s)
+	return muo
+}
+
+// SetNillableFull sets the "full" field if the given value is not nil.
+func (muo *MediaUpdateOne) SetNillableFull(s *string) *MediaUpdateOne {
+	if s != nil {
+		muo.SetFull(*s)
+	}
+	return muo
+}
+
+// ClearFull clears the value of the "full" field.
+func (muo *MediaUpdateOne) ClearFull() *MediaUpdateOne {
+	muo.mutation.ClearFull()
+	return muo
+}
+
+// SetPostedAt sets the "posted_at" field.
+func (muo *MediaUpdateOne) SetPostedAt(s string) *MediaUpdateOne {
+	muo.mutation.SetPostedAt(s)
 	return muo
 }
 
@@ -483,6 +529,12 @@ func (muo *MediaUpdateOne) sqlSave(ctx context.Context) (_node *Media, err error
 	}
 	if value, ok := muo.mutation.Full(); ok {
 		_spec.SetField(media.FieldFull, field.TypeString, value)
+	}
+	if muo.mutation.FullCleared() {
+		_spec.ClearField(media.FieldFull, field.TypeString)
+	}
+	if value, ok := muo.mutation.PostedAt(); ok {
+		_spec.SetField(media.FieldPostedAt, field.TypeString, value)
 	}
 	if value, ok := muo.mutation.DownloadedAt(); ok {
 		_spec.SetField(media.FieldDownloadedAt, field.TypeTime, value)

@@ -3,6 +3,8 @@
 package messagemedia
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
@@ -16,14 +18,18 @@ const (
 	FieldMessageID = "message_id"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
-	// FieldFull holds the string denoting the full field in the database.
-	FieldFull = "full"
+	// FieldSrc holds the string denoting the src field in the database.
+	FieldSrc = "src"
 	// FieldDownloadedAt holds the string denoting the downloaded_at field in the database.
 	FieldDownloadedAt = "downloaded_at"
 	// FieldStashID holds the string denoting the stash_id field in the database.
 	FieldStashID = "stash_id"
 	// FieldOrganizedAt holds the string denoting the organized_at field in the database.
 	FieldOrganizedAt = "organized_at"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
+	FieldUpdatedAt = "updated_at"
 	// EdgeMessage holds the string denoting the message edge name in mutations.
 	EdgeMessage = "message"
 	// Table holds the table name of the messagemedia in the database.
@@ -42,10 +48,12 @@ var Columns = []string{
 	FieldID,
 	FieldMessageID,
 	FieldType,
-	FieldFull,
+	FieldSrc,
 	FieldDownloadedAt,
 	FieldStashID,
 	FieldOrganizedAt,
+	FieldCreatedAt,
+	FieldUpdatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -57,6 +65,17 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
+	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
+	DefaultUpdatedAt func() time.Time
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
+	UpdateDefaultUpdatedAt func() time.Time
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(int) error
+)
 
 // OrderOption defines the ordering options for the MessageMedia queries.
 type OrderOption func(*sql.Selector)
@@ -76,9 +95,9 @@ func ByType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldType, opts...).ToFunc()
 }
 
-// ByFull orders the results by the full field.
-func ByFull(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFull, opts...).ToFunc()
+// BySrc orders the results by the src field.
+func BySrc(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSrc, opts...).ToFunc()
 }
 
 // ByDownloadedAt orders the results by the downloaded_at field.
@@ -94,6 +113,16 @@ func ByStashID(opts ...sql.OrderTermOption) OrderOption {
 // ByOrganizedAt orders the results by the organized_at field.
 func ByOrganizedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOrganizedAt, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByUpdatedAt orders the results by the updated_at field.
+func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
 // ByMessageField orders the results by message field.

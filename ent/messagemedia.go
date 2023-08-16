@@ -4,6 +4,8 @@ package ent
 
 import (
 	"fmt"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -22,14 +24,18 @@ type MessageMedia struct {
 	MessageID int `json:"message_id,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
-	// Full holds the value of the "full" field.
-	Full string `json:"full,omitempty"`
+	// Src holds the value of the "src" field.
+	Src string `json:"src,omitempty"`
 	// DownloadedAt holds the value of the "downloaded_at" field.
 	DownloadedAt time.Time `json:"downloaded_at,omitempty"`
 	// StashID holds the value of the "stash_id" field.
 	StashID string `json:"stash_id,omitempty"`
 	// OrganizedAt holds the value of the "organized_at" field.
 	OrganizedAt time.Time `json:"organized_at,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MessageMediaQuery when eager-loading is set.
 	Edges        MessageMediaEdges `json:"edges"`
@@ -65,9 +71,9 @@ func (*MessageMedia) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case messagemedia.FieldID, messagemedia.FieldMessageID:
 			values[i] = new(sql.NullInt64)
-		case messagemedia.FieldType, messagemedia.FieldFull, messagemedia.FieldStashID:
+		case messagemedia.FieldType, messagemedia.FieldSrc, messagemedia.FieldStashID:
 			values[i] = new(sql.NullString)
-		case messagemedia.FieldDownloadedAt, messagemedia.FieldOrganizedAt:
+		case messagemedia.FieldDownloadedAt, messagemedia.FieldOrganizedAt, messagemedia.FieldCreatedAt, messagemedia.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -102,11 +108,11 @@ func (mm *MessageMedia) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				mm.Type = value.String
 			}
-		case messagemedia.FieldFull:
+		case messagemedia.FieldSrc:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field full", values[i])
+				return fmt.Errorf("unexpected type %T for field src", values[i])
 			} else if value.Valid {
-				mm.Full = value.String
+				mm.Src = value.String
 			}
 		case messagemedia.FieldDownloadedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -125,6 +131,18 @@ func (mm *MessageMedia) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field organized_at", values[i])
 			} else if value.Valid {
 				mm.OrganizedAt = value.Time
+			}
+		case messagemedia.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				mm.CreatedAt = value.Time
+			}
+		case messagemedia.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				mm.UpdatedAt = value.Time
 			}
 		default:
 			mm.selectValues.Set(columns[i], values[i])
@@ -173,8 +191,8 @@ func (mm *MessageMedia) String() string {
 	builder.WriteString("type=")
 	builder.WriteString(mm.Type)
 	builder.WriteString(", ")
-	builder.WriteString("full=")
-	builder.WriteString(mm.Full)
+	builder.WriteString("src=")
+	builder.WriteString(mm.Src)
 	builder.WriteString(", ")
 	builder.WriteString("downloaded_at=")
 	builder.WriteString(mm.DownloadedAt.Format(time.ANSIC))
@@ -184,8 +202,27 @@ func (mm *MessageMedia) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("organized_at=")
 	builder.WriteString(mm.OrganizedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(mm.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(mm.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// URL returns the URL of the downloadable media
+func (m *MessageMedia) URL() string {
+	return m.Src
+}
+
+func (m MessageMedia) Directory() string {
+	return fmt.Sprintf("/%s/messages/%d", m.Edges.Message.Edges.Subscription.Username, m.Edges.Message.ID)
+}
+func (mm *MessageMedia) Filename() string {
+	u, _ := url.Parse(m.URL())
+	return path.Base(u.Path)
 }
 
 // MessageMediaSlice is a parsable slice of MessageMedia.

@@ -65,9 +65,9 @@ func Type(v string) predicate.MessageMedia {
 	return predicate.MessageMedia(sql.FieldEQ(FieldType, v))
 }
 
-// Full applies equality check predicate on the "full" field. It's identical to FullEQ.
-func Full(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldEQ(FieldFull, v))
+// Src applies equality check predicate on the "src" field. It's identical to SrcEQ.
+func Src(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEQ(FieldSrc, v))
 }
 
 // DownloadedAt applies equality check predicate on the "downloaded_at" field. It's identical to DownloadedAtEQ.
@@ -83,6 +83,16 @@ func StashID(v string) predicate.MessageMedia {
 // OrganizedAt applies equality check predicate on the "organized_at" field. It's identical to OrganizedAtEQ.
 func OrganizedAt(v time.Time) predicate.MessageMedia {
 	return predicate.MessageMedia(sql.FieldEQ(FieldOrganizedAt, v))
+}
+
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
+func UpdatedAt(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
 // MessageIDEQ applies the EQ predicate on the "message_id" field.
@@ -170,69 +180,79 @@ func TypeContainsFold(v string) predicate.MessageMedia {
 	return predicate.MessageMedia(sql.FieldContainsFold(FieldType, v))
 }
 
-// FullEQ applies the EQ predicate on the "full" field.
-func FullEQ(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldEQ(FieldFull, v))
+// SrcEQ applies the EQ predicate on the "src" field.
+func SrcEQ(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEQ(FieldSrc, v))
 }
 
-// FullNEQ applies the NEQ predicate on the "full" field.
-func FullNEQ(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldNEQ(FieldFull, v))
+// SrcNEQ applies the NEQ predicate on the "src" field.
+func SrcNEQ(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNEQ(FieldSrc, v))
 }
 
-// FullIn applies the In predicate on the "full" field.
-func FullIn(vs ...string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldIn(FieldFull, vs...))
+// SrcIn applies the In predicate on the "src" field.
+func SrcIn(vs ...string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldIn(FieldSrc, vs...))
 }
 
-// FullNotIn applies the NotIn predicate on the "full" field.
-func FullNotIn(vs ...string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldNotIn(FieldFull, vs...))
+// SrcNotIn applies the NotIn predicate on the "src" field.
+func SrcNotIn(vs ...string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNotIn(FieldSrc, vs...))
 }
 
-// FullGT applies the GT predicate on the "full" field.
-func FullGT(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldGT(FieldFull, v))
+// SrcGT applies the GT predicate on the "src" field.
+func SrcGT(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldGT(FieldSrc, v))
 }
 
-// FullGTE applies the GTE predicate on the "full" field.
-func FullGTE(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldGTE(FieldFull, v))
+// SrcGTE applies the GTE predicate on the "src" field.
+func SrcGTE(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldGTE(FieldSrc, v))
 }
 
-// FullLT applies the LT predicate on the "full" field.
-func FullLT(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldLT(FieldFull, v))
+// SrcLT applies the LT predicate on the "src" field.
+func SrcLT(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldLT(FieldSrc, v))
 }
 
-// FullLTE applies the LTE predicate on the "full" field.
-func FullLTE(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldLTE(FieldFull, v))
+// SrcLTE applies the LTE predicate on the "src" field.
+func SrcLTE(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldLTE(FieldSrc, v))
 }
 
-// FullContains applies the Contains predicate on the "full" field.
-func FullContains(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldContains(FieldFull, v))
+// SrcContains applies the Contains predicate on the "src" field.
+func SrcContains(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldContains(FieldSrc, v))
 }
 
-// FullHasPrefix applies the HasPrefix predicate on the "full" field.
-func FullHasPrefix(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldHasPrefix(FieldFull, v))
+// SrcHasPrefix applies the HasPrefix predicate on the "src" field.
+func SrcHasPrefix(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldHasPrefix(FieldSrc, v))
 }
 
-// FullHasSuffix applies the HasSuffix predicate on the "full" field.
-func FullHasSuffix(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldHasSuffix(FieldFull, v))
+// SrcHasSuffix applies the HasSuffix predicate on the "src" field.
+func SrcHasSuffix(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldHasSuffix(FieldSrc, v))
 }
 
-// FullEqualFold applies the EqualFold predicate on the "full" field.
-func FullEqualFold(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldEqualFold(FieldFull, v))
+// SrcIsNil applies the IsNil predicate on the "src" field.
+func SrcIsNil() predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldIsNull(FieldSrc))
 }
 
-// FullContainsFold applies the ContainsFold predicate on the "full" field.
-func FullContainsFold(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldContainsFold(FieldFull, v))
+// SrcNotNil applies the NotNil predicate on the "src" field.
+func SrcNotNil() predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNotNull(FieldSrc))
+}
+
+// SrcEqualFold applies the EqualFold predicate on the "src" field.
+func SrcEqualFold(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEqualFold(FieldSrc, v))
+}
+
+// SrcContainsFold applies the ContainsFold predicate on the "src" field.
+func SrcContainsFold(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldContainsFold(FieldSrc, v))
 }
 
 // DownloadedAtEQ applies the EQ predicate on the "downloaded_at" field.
@@ -398,6 +418,86 @@ func OrganizedAtIsNil() predicate.MessageMedia {
 // OrganizedAtNotNil applies the NotNil predicate on the "organized_at" field.
 func OrganizedAtNotNil() predicate.MessageMedia {
 	return predicate.MessageMedia(sql.FieldNotNull(FieldOrganizedAt))
+}
+
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNotIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldGT(FieldCreatedAt, v))
+}
+
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldGTE(FieldCreatedAt, v))
+}
+
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldLT(FieldCreatedAt, v))
+}
+
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldLTE(FieldCreatedAt, v))
+}
+
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
+func UpdatedAtEQ(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
+func UpdatedAtNEQ(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
+func UpdatedAtIn(vs ...time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
+func UpdatedAtNotIn(vs ...time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNotIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
+func UpdatedAtGT(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldGT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
+func UpdatedAtGTE(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldGTE(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
+func UpdatedAtLT(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldLT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
+func UpdatedAtLTE(v time.Time) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
 // HasMessage applies the HasEdge predicate on the "message" edge.

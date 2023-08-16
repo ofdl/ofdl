@@ -4,6 +4,8 @@ package ent
 
 import (
 	"fmt"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -24,6 +26,8 @@ type Media struct {
 	Type string `json:"type,omitempty"`
 	// Full holds the value of the "full" field.
 	Full string `json:"full,omitempty"`
+	// PostedAt holds the value of the "posted_at" field.
+	PostedAt string `json:"posted_at,omitempty"`
 	// DownloadedAt holds the value of the "downloaded_at" field.
 	DownloadedAt time.Time `json:"downloaded_at,omitempty"`
 	// StashID holds the value of the "stash_id" field.
@@ -69,7 +73,7 @@ func (*Media) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case media.FieldID, media.FieldPostID:
 			values[i] = new(sql.NullInt64)
-		case media.FieldType, media.FieldFull, media.FieldStashID:
+		case media.FieldType, media.FieldFull, media.FieldPostedAt, media.FieldStashID:
 			values[i] = new(sql.NullString)
 		case media.FieldDownloadedAt, media.FieldOrganizedAt, media.FieldCreatedAt, media.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -111,6 +115,12 @@ func (m *Media) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field full", values[i])
 			} else if value.Valid {
 				m.Full = value.String
+			}
+		case media.FieldPostedAt:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field posted_at", values[i])
+			} else if value.Valid {
+				m.PostedAt = value.String
 			}
 		case media.FieldDownloadedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -192,6 +202,9 @@ func (m *Media) String() string {
 	builder.WriteString("full=")
 	builder.WriteString(m.Full)
 	builder.WriteString(", ")
+	builder.WriteString("posted_at=")
+	builder.WriteString(m.PostedAt)
+	builder.WriteString(", ")
 	builder.WriteString("downloaded_at=")
 	builder.WriteString(m.DownloadedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
@@ -208,6 +221,19 @@ func (m *Media) String() string {
 	builder.WriteString(m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// URL returns the URL of the downloadable media
+func (m *Media) URL() string {
+	return m.Full
+}
+
+func (m *Media) Directory() string {
+	return fmt.Sprintf("/%s/posts/%d", m.Edges.Post.Edges.Subscription.Username, m.Edges.Post.ID)
+}
+func (m *Media) Filename() string {
+	u, _ := url.Parse(m.URL())
+	return path.Base(u.Path)
 }
 
 // MediaSlice is a parsable slice of Media.

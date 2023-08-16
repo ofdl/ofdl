@@ -5,42 +5,36 @@ import (
 	"path"
 	"strings"
 
-	"github.com/ofdl/ofdl/model"
 	"github.com/siku2/arigo"
 	"github.com/spf13/viper"
-	"gorm.io/gorm"
 )
 
 type Aria2Downloader struct {
-	db   *gorm.DB
 	rpc  *arigo.Client
 	root string
 }
 
-func NewAria2Downloader(db *gorm.DB, address, secret, root string) (*Aria2Downloader, error) {
+func NewAria2Downloader(address, secret, root string) (Downloader, error) {
 	ag, err := arigo.Dial(address, secret)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Aria2Downloader{
-		db:   db,
 		rpc:  &ag,
 		root: root,
 	}, nil
 }
 
-var _ Downloader = &Aria2Downloader{}
-
 // DownloadMany implements Downloader.
-func (d *Aria2Downloader) DownloadMany(mm []model.DownloadableMedia) <-chan error {
+func (d *Aria2Downloader) DownloadMany(mm []Downloadable) <-chan error {
 	d1 := make(chan error)
 
 	go func() {
 		sem := make(chan struct{}, 5)
 		for _, m := range mm {
 			sem <- struct{}{}
-			go func(m model.DownloadableMedia) {
+			go func(m Downloadable) {
 				defer func() { <-sem }()
 
 				p, done := d.DownloadOne(m)
@@ -64,7 +58,7 @@ func (d *Aria2Downloader) DownloadMany(mm []model.DownloadableMedia) <-chan erro
 }
 
 // DownloadOne implements Downloader.
-func (d *Aria2Downloader) DownloadOne(m model.DownloadableMedia) (<-chan float64, <-chan error) {
+func (d *Aria2Downloader) DownloadOne(m Downloadable) (<-chan float64, <-chan error) {
 	progress := make(chan float64)
 	done := make(chan error)
 
@@ -72,7 +66,7 @@ func (d *Aria2Downloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 		defer close(progress)
 
 		if m.URL() == "" {
-			done <- m.MarkDownloaded(d.db)
+			done <- nil
 			return
 		}
 
@@ -91,7 +85,7 @@ func (d *Aria2Downloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 			return
 		}
 
-		done <- m.MarkDownloaded(d.db)
+		done <- nil
 	}()
 
 	return progress, done

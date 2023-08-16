@@ -3,23 +3,26 @@ package downloader
 import (
 	"fmt"
 
-	"github.com/ofdl/ofdl/model"
 	"github.com/spf13/viper"
-	"gorm.io/gorm"
 )
 
-type Downloader interface {
-	DownloadOne(model.DownloadableMedia) (<-chan float64, <-chan error)
-	DownloadMany([]model.DownloadableMedia) <-chan error
+type Downloadable interface {
+	Directory() string
+	Filename() string
+	URL() string
 }
 
-func NewDownloader(db *gorm.DB) (dl Downloader, err error) {
+type Downloader interface {
+	DownloadOne(Downloadable) (<-chan float64, <-chan error)
+	DownloadMany([]Downloadable) <-chan error
+}
+
+func NewDownloader() (dl Downloader, err error) {
 	switch viper.GetString("downloads.downloader") {
 	case "local":
-		dl, err = NewLocalDownloader(db, viper.GetString("downloads.local.root"))
+		dl, err = NewLocalDownloader(viper.GetString("downloads.local.root"))
 	case "aria2":
 		dl, err = NewAria2Downloader(
-			db,
 			viper.GetString("downloads.aria2.address"),
 			viper.GetString("downloads.aria2.secret"),
 			viper.GetString("downloads.aria2.root"),
@@ -28,4 +31,12 @@ func NewDownloader(db *gorm.DB) (dl Downloader, err error) {
 		return nil, fmt.Errorf("unknown downloader: %s", viper.GetString("downloads.downloader"))
 	}
 	return
+}
+
+func ToDownloadableSlice[T Downloadable](v []T) []Downloadable {
+	r := make([]Downloadable, len(v))
+	for i := range v {
+		r[i] = v[i]
+	}
+	return r
 }

@@ -20,6 +20,8 @@ const (
 	FieldType = "type"
 	// FieldFull holds the string denoting the full field in the database.
 	FieldFull = "full"
+	// FieldPostedAt holds the string denoting the posted_at field in the database.
+	FieldPostedAt = "posted_at"
 	// FieldDownloadedAt holds the string denoting the downloaded_at field in the database.
 	FieldDownloadedAt = "downloaded_at"
 	// FieldStashID holds the string denoting the stash_id field in the database.
@@ -49,6 +51,7 @@ var Columns = []string{
 	FieldPostID,
 	FieldType,
 	FieldFull,
+	FieldPostedAt,
 	FieldDownloadedAt,
 	FieldStashID,
 	FieldOrganizedAt,
@@ -98,6 +101,11 @@ func ByType(opts ...sql.OrderTermOption) OrderOption {
 // ByFull orders the results by the full field.
 func ByFull(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFull, opts...).ToFunc()
+}
+
+// ByPostedAt orders the results by the posted_at field.
+func ByPostedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPostedAt, opts...).ToFunc()
 }
 
 // ByDownloadedAt orders the results by the downloaded_at field.

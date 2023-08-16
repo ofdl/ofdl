@@ -35,9 +35,17 @@ func (mmc *MessageMediaCreate) SetType(s string) *MessageMediaCreate {
 	return mmc
 }
 
-// SetFull sets the "full" field.
-func (mmc *MessageMediaCreate) SetFull(s string) *MessageMediaCreate {
-	mmc.mutation.SetFull(s)
+// SetSrc sets the "src" field.
+func (mmc *MessageMediaCreate) SetSrc(s string) *MessageMediaCreate {
+	mmc.mutation.SetSrc(s)
+	return mmc
+}
+
+// SetNillableSrc sets the "src" field if the given value is not nil.
+func (mmc *MessageMediaCreate) SetNillableSrc(s *string) *MessageMediaCreate {
+	if s != nil {
+		mmc.SetSrc(*s)
+	}
 	return mmc
 }
 
@@ -75,6 +83,40 @@ func (mmc *MessageMediaCreate) SetNillableOrganizedAt(t *time.Time) *MessageMedi
 	return mmc
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (mmc *MessageMediaCreate) SetCreatedAt(t time.Time) *MessageMediaCreate {
+	mmc.mutation.SetCreatedAt(t)
+	return mmc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (mmc *MessageMediaCreate) SetNillableCreatedAt(t *time.Time) *MessageMediaCreate {
+	if t != nil {
+		mmc.SetCreatedAt(*t)
+	}
+	return mmc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (mmc *MessageMediaCreate) SetUpdatedAt(t time.Time) *MessageMediaCreate {
+	mmc.mutation.SetUpdatedAt(t)
+	return mmc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (mmc *MessageMediaCreate) SetNillableUpdatedAt(t *time.Time) *MessageMediaCreate {
+	if t != nil {
+		mmc.SetUpdatedAt(*t)
+	}
+	return mmc
+}
+
+// SetID sets the "id" field.
+func (mmc *MessageMediaCreate) SetID(i int) *MessageMediaCreate {
+	mmc.mutation.SetID(i)
+	return mmc
+}
+
 // SetMessage sets the "message" edge to the Message entity.
 func (mmc *MessageMediaCreate) SetMessage(m *Message) *MessageMediaCreate {
 	return mmc.SetMessageID(m.ID)
@@ -87,6 +129,7 @@ func (mmc *MessageMediaCreate) Mutation() *MessageMediaMutation {
 
 // Save creates the MessageMedia in the database.
 func (mmc *MessageMediaCreate) Save(ctx context.Context) (*MessageMedia, error) {
+	mmc.defaults()
 	return withHooks(ctx, mmc.sqlSave, mmc.mutation, mmc.hooks)
 }
 
@@ -112,6 +155,18 @@ func (mmc *MessageMediaCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (mmc *MessageMediaCreate) defaults() {
+	if _, ok := mmc.mutation.CreatedAt(); !ok {
+		v := messagemedia.DefaultCreatedAt()
+		mmc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := mmc.mutation.UpdatedAt(); !ok {
+		v := messagemedia.DefaultUpdatedAt()
+		mmc.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (mmc *MessageMediaCreate) check() error {
 	if _, ok := mmc.mutation.MessageID(); !ok {
@@ -120,11 +175,19 @@ func (mmc *MessageMediaCreate) check() error {
 	if _, ok := mmc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "MessageMedia.type"`)}
 	}
-	if _, ok := mmc.mutation.Full(); !ok {
-		return &ValidationError{Name: "full", err: errors.New(`ent: missing required field "MessageMedia.full"`)}
-	}
 	if _, ok := mmc.mutation.StashID(); !ok {
 		return &ValidationError{Name: "stash_id", err: errors.New(`ent: missing required field "MessageMedia.stash_id"`)}
+	}
+	if _, ok := mmc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "MessageMedia.created_at"`)}
+	}
+	if _, ok := mmc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "MessageMedia.updated_at"`)}
+	}
+	if v, ok := mmc.mutation.ID(); ok {
+		if err := messagemedia.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "MessageMedia.id": %w`, err)}
+		}
 	}
 	if _, ok := mmc.mutation.MessageID(); !ok {
 		return &ValidationError{Name: "message", err: errors.New(`ent: missing required edge "MessageMedia.message"`)}
@@ -143,8 +206,10 @@ func (mmc *MessageMediaCreate) sqlSave(ctx context.Context) (*MessageMedia, erro
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int(id)
+	}
 	mmc.mutation.id = &_node.ID
 	mmc.mutation.done = true
 	return _node, nil
@@ -156,13 +221,17 @@ func (mmc *MessageMediaCreate) createSpec() (*MessageMedia, *sqlgraph.CreateSpec
 		_spec = sqlgraph.NewCreateSpec(messagemedia.Table, sqlgraph.NewFieldSpec(messagemedia.FieldID, field.TypeInt))
 	)
 	_spec.OnConflict = mmc.conflict
+	if id, ok := mmc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := mmc.mutation.GetType(); ok {
 		_spec.SetField(messagemedia.FieldType, field.TypeString, value)
 		_node.Type = value
 	}
-	if value, ok := mmc.mutation.Full(); ok {
-		_spec.SetField(messagemedia.FieldFull, field.TypeString, value)
-		_node.Full = value
+	if value, ok := mmc.mutation.Src(); ok {
+		_spec.SetField(messagemedia.FieldSrc, field.TypeString, value)
+		_node.Src = value
 	}
 	if value, ok := mmc.mutation.DownloadedAt(); ok {
 		_spec.SetField(messagemedia.FieldDownloadedAt, field.TypeTime, value)
@@ -175,6 +244,14 @@ func (mmc *MessageMediaCreate) createSpec() (*MessageMedia, *sqlgraph.CreateSpec
 	if value, ok := mmc.mutation.OrganizedAt(); ok {
 		_spec.SetField(messagemedia.FieldOrganizedAt, field.TypeTime, value)
 		_node.OrganizedAt = value
+	}
+	if value, ok := mmc.mutation.CreatedAt(); ok {
+		_spec.SetField(messagemedia.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := mmc.mutation.UpdatedAt(); ok {
+		_spec.SetField(messagemedia.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	if nodes := mmc.mutation.MessageIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -269,15 +346,21 @@ func (u *MessageMediaUpsert) UpdateType() *MessageMediaUpsert {
 	return u
 }
 
-// SetFull sets the "full" field.
-func (u *MessageMediaUpsert) SetFull(v string) *MessageMediaUpsert {
-	u.Set(messagemedia.FieldFull, v)
+// SetSrc sets the "src" field.
+func (u *MessageMediaUpsert) SetSrc(v string) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldSrc, v)
 	return u
 }
 
-// UpdateFull sets the "full" field to the value that was provided on create.
-func (u *MessageMediaUpsert) UpdateFull() *MessageMediaUpsert {
-	u.SetExcluded(messagemedia.FieldFull)
+// UpdateSrc sets the "src" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateSrc() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldSrc)
+	return u
+}
+
+// ClearSrc clears the value of the "src" field.
+func (u *MessageMediaUpsert) ClearSrc() *MessageMediaUpsert {
+	u.SetNull(messagemedia.FieldSrc)
 	return u
 }
 
@@ -329,16 +412,48 @@ func (u *MessageMediaUpsert) ClearOrganizedAt() *MessageMediaUpsert {
 	return u
 }
 
-// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// SetCreatedAt sets the "created_at" field.
+func (u *MessageMediaUpsert) SetCreatedAt(v time.Time) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldCreatedAt, v)
+	return u
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateCreatedAt() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldCreatedAt)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *MessageMediaUpsert) SetUpdatedAt(v time.Time) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateUpdatedAt() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
 //	client.MessageMedia.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(messagemedia.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *MessageMediaUpsertOne) UpdateNewValues() *MessageMediaUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(messagemedia.FieldID)
+		}
+	}))
 	return u
 }
 
@@ -397,17 +512,24 @@ func (u *MessageMediaUpsertOne) UpdateType() *MessageMediaUpsertOne {
 	})
 }
 
-// SetFull sets the "full" field.
-func (u *MessageMediaUpsertOne) SetFull(v string) *MessageMediaUpsertOne {
+// SetSrc sets the "src" field.
+func (u *MessageMediaUpsertOne) SetSrc(v string) *MessageMediaUpsertOne {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.SetFull(v)
+		s.SetSrc(v)
 	})
 }
 
-// UpdateFull sets the "full" field to the value that was provided on create.
-func (u *MessageMediaUpsertOne) UpdateFull() *MessageMediaUpsertOne {
+// UpdateSrc sets the "src" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateSrc() *MessageMediaUpsertOne {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.UpdateFull()
+		s.UpdateSrc()
+	})
+}
+
+// ClearSrc clears the value of the "src" field.
+func (u *MessageMediaUpsertOne) ClearSrc() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.ClearSrc()
 	})
 }
 
@@ -467,6 +589,34 @@ func (u *MessageMediaUpsertOne) ClearOrganizedAt() *MessageMediaUpsertOne {
 	})
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (u *MessageMediaUpsertOne) SetCreatedAt(v time.Time) *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetCreatedAt(v)
+	})
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateCreatedAt() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateCreatedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *MessageMediaUpsertOne) SetUpdatedAt(v time.Time) *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateUpdatedAt() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
 // Exec executes the query.
 func (u *MessageMediaUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -515,6 +665,7 @@ func (mmcb *MessageMediaCreateBulk) Save(ctx context.Context) ([]*MessageMedia, 
 	for i := range mmcb.builders {
 		func(i int, root context.Context) {
 			builder := mmcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*MessageMediaMutation)
 				if !ok {
@@ -542,7 +693,7 @@ func (mmcb *MessageMediaCreateBulk) Save(ctx context.Context) ([]*MessageMedia, 
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int(id)
 				}
@@ -632,10 +783,20 @@ type MessageMediaUpsertBulk struct {
 //	client.MessageMedia.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(messagemedia.FieldID)
+//			}),
 //		).
 //		Exec(ctx)
 func (u *MessageMediaUpsertBulk) UpdateNewValues() *MessageMediaUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(messagemedia.FieldID)
+			}
+		}
+	}))
 	return u
 }
 
@@ -694,17 +855,24 @@ func (u *MessageMediaUpsertBulk) UpdateType() *MessageMediaUpsertBulk {
 	})
 }
 
-// SetFull sets the "full" field.
-func (u *MessageMediaUpsertBulk) SetFull(v string) *MessageMediaUpsertBulk {
+// SetSrc sets the "src" field.
+func (u *MessageMediaUpsertBulk) SetSrc(v string) *MessageMediaUpsertBulk {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.SetFull(v)
+		s.SetSrc(v)
 	})
 }
 
-// UpdateFull sets the "full" field to the value that was provided on create.
-func (u *MessageMediaUpsertBulk) UpdateFull() *MessageMediaUpsertBulk {
+// UpdateSrc sets the "src" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateSrc() *MessageMediaUpsertBulk {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.UpdateFull()
+		s.UpdateSrc()
+	})
+}
+
+// ClearSrc clears the value of the "src" field.
+func (u *MessageMediaUpsertBulk) ClearSrc() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.ClearSrc()
 	})
 }
 
@@ -761,6 +929,34 @@ func (u *MessageMediaUpsertBulk) UpdateOrganizedAt() *MessageMediaUpsertBulk {
 func (u *MessageMediaUpsertBulk) ClearOrganizedAt() *MessageMediaUpsertBulk {
 	return u.Update(func(s *MessageMediaUpsert) {
 		s.ClearOrganizedAt()
+	})
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (u *MessageMediaUpsertBulk) SetCreatedAt(v time.Time) *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetCreatedAt(v)
+	})
+}
+
+// UpdateCreatedAt sets the "created_at" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateCreatedAt() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateCreatedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *MessageMediaUpsertBulk) SetUpdatedAt(v time.Time) *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateUpdatedAt() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.UpdateUpdatedAt()
 	})
 }
 

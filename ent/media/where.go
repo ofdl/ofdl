@@ -70,6 +70,11 @@ func Full(v string) predicate.Media {
 	return predicate.Media(sql.FieldEQ(FieldFull, v))
 }
 
+// PostedAt applies equality check predicate on the "posted_at" field. It's identical to PostedAtEQ.
+func PostedAt(v string) predicate.Media {
+	return predicate.Media(sql.FieldEQ(FieldPostedAt, v))
+}
+
 // DownloadedAt applies equality check predicate on the "downloaded_at" field. It's identical to DownloadedAtEQ.
 func DownloadedAt(v time.Time) predicate.Media {
 	return predicate.Media(sql.FieldEQ(FieldDownloadedAt, v))
@@ -235,6 +240,16 @@ func FullHasSuffix(v string) predicate.Media {
 	return predicate.Media(sql.FieldHasSuffix(FieldFull, v))
 }
 
+// FullIsNil applies the IsNil predicate on the "full" field.
+func FullIsNil() predicate.Media {
+	return predicate.Media(sql.FieldIsNull(FieldFull))
+}
+
+// FullNotNil applies the NotNil predicate on the "full" field.
+func FullNotNil() predicate.Media {
+	return predicate.Media(sql.FieldNotNull(FieldFull))
+}
+
 // FullEqualFold applies the EqualFold predicate on the "full" field.
 func FullEqualFold(v string) predicate.Media {
 	return predicate.Media(sql.FieldEqualFold(FieldFull, v))
@@ -243,6 +258,71 @@ func FullEqualFold(v string) predicate.Media {
 // FullContainsFold applies the ContainsFold predicate on the "full" field.
 func FullContainsFold(v string) predicate.Media {
 	return predicate.Media(sql.FieldContainsFold(FieldFull, v))
+}
+
+// PostedAtEQ applies the EQ predicate on the "posted_at" field.
+func PostedAtEQ(v string) predicate.Media {
+	return predicate.Media(sql.FieldEQ(FieldPostedAt, v))
+}
+
+// PostedAtNEQ applies the NEQ predicate on the "posted_at" field.
+func PostedAtNEQ(v string) predicate.Media {
+	return predicate.Media(sql.FieldNEQ(FieldPostedAt, v))
+}
+
+// PostedAtIn applies the In predicate on the "posted_at" field.
+func PostedAtIn(vs ...string) predicate.Media {
+	return predicate.Media(sql.FieldIn(FieldPostedAt, vs...))
+}
+
+// PostedAtNotIn applies the NotIn predicate on the "posted_at" field.
+func PostedAtNotIn(vs ...string) predicate.Media {
+	return predicate.Media(sql.FieldNotIn(FieldPostedAt, vs...))
+}
+
+// PostedAtGT applies the GT predicate on the "posted_at" field.
+func PostedAtGT(v string) predicate.Media {
+	return predicate.Media(sql.FieldGT(FieldPostedAt, v))
+}
+
+// PostedAtGTE applies the GTE predicate on the "posted_at" field.
+func PostedAtGTE(v string) predicate.Media {
+	return predicate.Media(sql.FieldGTE(FieldPostedAt, v))
+}
+
+// PostedAtLT applies the LT predicate on the "posted_at" field.
+func PostedAtLT(v string) predicate.Media {
+	return predicate.Media(sql.FieldLT(FieldPostedAt, v))
+}
+
+// PostedAtLTE applies the LTE predicate on the "posted_at" field.
+func PostedAtLTE(v string) predicate.Media {
+	return predicate.Media(sql.FieldLTE(FieldPostedAt, v))
+}
+
+// PostedAtContains applies the Contains predicate on the "posted_at" field.
+func PostedAtContains(v string) predicate.Media {
+	return predicate.Media(sql.FieldContains(FieldPostedAt, v))
+}
+
+// PostedAtHasPrefix applies the HasPrefix predicate on the "posted_at" field.
+func PostedAtHasPrefix(v string) predicate.Media {
+	return predicate.Media(sql.FieldHasPrefix(FieldPostedAt, v))
+}
+
+// PostedAtHasSuffix applies the HasSuffix predicate on the "posted_at" field.
+func PostedAtHasSuffix(v string) predicate.Media {
+	return predicate.Media(sql.FieldHasSuffix(FieldPostedAt, v))
+}
+
+// PostedAtEqualFold applies the EqualFold predicate on the "posted_at" field.
+func PostedAtEqualFold(v string) predicate.Media {
+	return predicate.Media(sql.FieldEqualFold(FieldPostedAt, v))
+}
+
+// PostedAtContainsFold applies the ContainsFold predicate on the "posted_at" field.
+func PostedAtContainsFold(v string) predicate.Media {
+	return predicate.Media(sql.FieldContainsFold(FieldPostedAt, v))
 }
 
 // DownloadedAtEQ applies the EQ predicate on the "downloaded_at" field.

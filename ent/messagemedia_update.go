@@ -41,9 +41,23 @@ func (mmu *MessageMediaUpdate) SetType(s string) *MessageMediaUpdate {
 	return mmu
 }
 
-// SetFull sets the "full" field.
-func (mmu *MessageMediaUpdate) SetFull(s string) *MessageMediaUpdate {
-	mmu.mutation.SetFull(s)
+// SetSrc sets the "src" field.
+func (mmu *MessageMediaUpdate) SetSrc(s string) *MessageMediaUpdate {
+	mmu.mutation.SetSrc(s)
+	return mmu
+}
+
+// SetNillableSrc sets the "src" field if the given value is not nil.
+func (mmu *MessageMediaUpdate) SetNillableSrc(s *string) *MessageMediaUpdate {
+	if s != nil {
+		mmu.SetSrc(*s)
+	}
+	return mmu
+}
+
+// ClearSrc clears the value of the "src" field.
+func (mmu *MessageMediaUpdate) ClearSrc() *MessageMediaUpdate {
+	mmu.mutation.ClearSrc()
 	return mmu
 }
 
@@ -93,6 +107,26 @@ func (mmu *MessageMediaUpdate) ClearOrganizedAt() *MessageMediaUpdate {
 	return mmu
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (mmu *MessageMediaUpdate) SetCreatedAt(t time.Time) *MessageMediaUpdate {
+	mmu.mutation.SetCreatedAt(t)
+	return mmu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (mmu *MessageMediaUpdate) SetNillableCreatedAt(t *time.Time) *MessageMediaUpdate {
+	if t != nil {
+		mmu.SetCreatedAt(*t)
+	}
+	return mmu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (mmu *MessageMediaUpdate) SetUpdatedAt(t time.Time) *MessageMediaUpdate {
+	mmu.mutation.SetUpdatedAt(t)
+	return mmu
+}
+
 // SetMessage sets the "message" edge to the Message entity.
 func (mmu *MessageMediaUpdate) SetMessage(m *Message) *MessageMediaUpdate {
 	return mmu.SetMessageID(m.ID)
@@ -111,6 +145,7 @@ func (mmu *MessageMediaUpdate) ClearMessage() *MessageMediaUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (mmu *MessageMediaUpdate) Save(ctx context.Context) (int, error) {
+	mmu.defaults()
 	return withHooks(ctx, mmu.sqlSave, mmu.mutation, mmu.hooks)
 }
 
@@ -133,6 +168,14 @@ func (mmu *MessageMediaUpdate) Exec(ctx context.Context) error {
 func (mmu *MessageMediaUpdate) ExecX(ctx context.Context) {
 	if err := mmu.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (mmu *MessageMediaUpdate) defaults() {
+	if _, ok := mmu.mutation.UpdatedAt(); !ok {
+		v := messagemedia.UpdateDefaultUpdatedAt()
+		mmu.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -159,8 +202,11 @@ func (mmu *MessageMediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := mmu.mutation.GetType(); ok {
 		_spec.SetField(messagemedia.FieldType, field.TypeString, value)
 	}
-	if value, ok := mmu.mutation.Full(); ok {
-		_spec.SetField(messagemedia.FieldFull, field.TypeString, value)
+	if value, ok := mmu.mutation.Src(); ok {
+		_spec.SetField(messagemedia.FieldSrc, field.TypeString, value)
+	}
+	if mmu.mutation.SrcCleared() {
+		_spec.ClearField(messagemedia.FieldSrc, field.TypeString)
 	}
 	if value, ok := mmu.mutation.DownloadedAt(); ok {
 		_spec.SetField(messagemedia.FieldDownloadedAt, field.TypeTime, value)
@@ -176,6 +222,12 @@ func (mmu *MessageMediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if mmu.mutation.OrganizedAtCleared() {
 		_spec.ClearField(messagemedia.FieldOrganizedAt, field.TypeTime)
+	}
+	if value, ok := mmu.mutation.CreatedAt(); ok {
+		_spec.SetField(messagemedia.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := mmu.mutation.UpdatedAt(); ok {
+		_spec.SetField(messagemedia.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if mmu.mutation.MessageCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -238,9 +290,23 @@ func (mmuo *MessageMediaUpdateOne) SetType(s string) *MessageMediaUpdateOne {
 	return mmuo
 }
 
-// SetFull sets the "full" field.
-func (mmuo *MessageMediaUpdateOne) SetFull(s string) *MessageMediaUpdateOne {
-	mmuo.mutation.SetFull(s)
+// SetSrc sets the "src" field.
+func (mmuo *MessageMediaUpdateOne) SetSrc(s string) *MessageMediaUpdateOne {
+	mmuo.mutation.SetSrc(s)
+	return mmuo
+}
+
+// SetNillableSrc sets the "src" field if the given value is not nil.
+func (mmuo *MessageMediaUpdateOne) SetNillableSrc(s *string) *MessageMediaUpdateOne {
+	if s != nil {
+		mmuo.SetSrc(*s)
+	}
+	return mmuo
+}
+
+// ClearSrc clears the value of the "src" field.
+func (mmuo *MessageMediaUpdateOne) ClearSrc() *MessageMediaUpdateOne {
+	mmuo.mutation.ClearSrc()
 	return mmuo
 }
 
@@ -290,6 +356,26 @@ func (mmuo *MessageMediaUpdateOne) ClearOrganizedAt() *MessageMediaUpdateOne {
 	return mmuo
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (mmuo *MessageMediaUpdateOne) SetCreatedAt(t time.Time) *MessageMediaUpdateOne {
+	mmuo.mutation.SetCreatedAt(t)
+	return mmuo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (mmuo *MessageMediaUpdateOne) SetNillableCreatedAt(t *time.Time) *MessageMediaUpdateOne {
+	if t != nil {
+		mmuo.SetCreatedAt(*t)
+	}
+	return mmuo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (mmuo *MessageMediaUpdateOne) SetUpdatedAt(t time.Time) *MessageMediaUpdateOne {
+	mmuo.mutation.SetUpdatedAt(t)
+	return mmuo
+}
+
 // SetMessage sets the "message" edge to the Message entity.
 func (mmuo *MessageMediaUpdateOne) SetMessage(m *Message) *MessageMediaUpdateOne {
 	return mmuo.SetMessageID(m.ID)
@@ -321,6 +407,7 @@ func (mmuo *MessageMediaUpdateOne) Select(field string, fields ...string) *Messa
 
 // Save executes the query and returns the updated MessageMedia entity.
 func (mmuo *MessageMediaUpdateOne) Save(ctx context.Context) (*MessageMedia, error) {
+	mmuo.defaults()
 	return withHooks(ctx, mmuo.sqlSave, mmuo.mutation, mmuo.hooks)
 }
 
@@ -343,6 +430,14 @@ func (mmuo *MessageMediaUpdateOne) Exec(ctx context.Context) error {
 func (mmuo *MessageMediaUpdateOne) ExecX(ctx context.Context) {
 	if err := mmuo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (mmuo *MessageMediaUpdateOne) defaults() {
+	if _, ok := mmuo.mutation.UpdatedAt(); !ok {
+		v := messagemedia.UpdateDefaultUpdatedAt()
+		mmuo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -386,8 +481,11 @@ func (mmuo *MessageMediaUpdateOne) sqlSave(ctx context.Context) (_node *MessageM
 	if value, ok := mmuo.mutation.GetType(); ok {
 		_spec.SetField(messagemedia.FieldType, field.TypeString, value)
 	}
-	if value, ok := mmuo.mutation.Full(); ok {
-		_spec.SetField(messagemedia.FieldFull, field.TypeString, value)
+	if value, ok := mmuo.mutation.Src(); ok {
+		_spec.SetField(messagemedia.FieldSrc, field.TypeString, value)
+	}
+	if mmuo.mutation.SrcCleared() {
+		_spec.ClearField(messagemedia.FieldSrc, field.TypeString)
 	}
 	if value, ok := mmuo.mutation.DownloadedAt(); ok {
 		_spec.SetField(messagemedia.FieldDownloadedAt, field.TypeTime, value)
@@ -403,6 +501,12 @@ func (mmuo *MessageMediaUpdateOne) sqlSave(ctx context.Context) (_node *MessageM
 	}
 	if mmuo.mutation.OrganizedAtCleared() {
 		_spec.ClearField(messagemedia.FieldOrganizedAt, field.TypeTime)
+	}
+	if value, ok := mmuo.mutation.CreatedAt(); ok {
+		_spec.SetField(messagemedia.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := mmuo.mutation.UpdatedAt(); ok {
+		_spec.SetField(messagemedia.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if mmuo.mutation.MessageCleared() {
 		edge := &sqlgraph.EdgeSpec{
