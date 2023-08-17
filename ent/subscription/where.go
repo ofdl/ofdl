@@ -575,6 +575,16 @@ func EnabledNEQ(v bool) predicate.Subscription {
 	return predicate.Subscription(sql.FieldNEQ(FieldEnabled, v))
 }
 
+// EnabledIsNil applies the IsNil predicate on the "enabled" field.
+func EnabledIsNil() predicate.Subscription {
+	return predicate.Subscription(sql.FieldIsNull(FieldEnabled))
+}
+
+// EnabledNotNil applies the NotNil predicate on the "enabled" field.
+func EnabledNotNil() predicate.Subscription {
+	return predicate.Subscription(sql.FieldNotNull(FieldEnabled))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Subscription {
 	return predicate.Subscription(sql.FieldEQ(FieldCreatedAt, v))

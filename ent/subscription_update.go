@@ -128,6 +128,12 @@ func (su *SubscriptionUpdate) SetNillableEnabled(b *bool) *SubscriptionUpdate {
 	return su
 }
 
+// ClearEnabled clears the value of the "enabled" field.
+func (su *SubscriptionUpdate) ClearEnabled() *SubscriptionUpdate {
+	su.mutation.ClearEnabled()
+	return su
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (su *SubscriptionUpdate) SetCreatedAt(t time.Time) *SubscriptionUpdate {
 	su.mutation.SetCreatedAt(t)
@@ -302,6 +308,9 @@ func (su *SubscriptionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.Enabled(); ok {
 		_spec.SetField(subscription.FieldEnabled, field.TypeBool, value)
+	}
+	if su.mutation.EnabledCleared() {
+		_spec.ClearField(subscription.FieldEnabled, field.TypeBool)
 	}
 	if value, ok := su.mutation.CreatedAt(); ok {
 		_spec.SetField(subscription.FieldCreatedAt, field.TypeTime, value)
@@ -517,6 +526,12 @@ func (suo *SubscriptionUpdateOne) SetNillableEnabled(b *bool) *SubscriptionUpdat
 	return suo
 }
 
+// ClearEnabled clears the value of the "enabled" field.
+func (suo *SubscriptionUpdateOne) ClearEnabled() *SubscriptionUpdateOne {
+	suo.mutation.ClearEnabled()
+	return suo
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (suo *SubscriptionUpdateOne) SetCreatedAt(t time.Time) *SubscriptionUpdateOne {
 	suo.mutation.SetCreatedAt(t)
@@ -721,6 +736,9 @@ func (suo *SubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *Subscript
 	}
 	if value, ok := suo.mutation.Enabled(); ok {
 		_spec.SetField(subscription.FieldEnabled, field.TypeBool, value)
+	}
+	if suo.mutation.EnabledCleared() {
+		_spec.ClearField(subscription.FieldEnabled, field.TypeBool)
 	}
 	if value, ok := suo.mutation.CreatedAt(); ok {
 		_spec.SetField(subscription.FieldCreatedAt, field.TypeTime, value)

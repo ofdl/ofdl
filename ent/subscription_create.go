@@ -231,9 +231,6 @@ func (sc *SubscriptionCreate) check() error {
 	if _, ok := sc.mutation.Username(); !ok {
 		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "Subscription.username"`)}
 	}
-	if _, ok := sc.mutation.Enabled(); !ok {
-		return &ValidationError{Name: "enabled", err: errors.New(`ent: missing required field "Subscription.enabled"`)}
-	}
 	if _, ok := sc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Subscription.created_at"`)}
 	}
@@ -516,6 +513,12 @@ func (u *SubscriptionUpsert) UpdateEnabled() *SubscriptionUpsert {
 	return u
 }
 
+// ClearEnabled clears the value of the "enabled" field.
+func (u *SubscriptionUpsert) ClearEnabled() *SubscriptionUpsert {
+	u.SetNull(subscription.FieldEnabled)
+	return u
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (u *SubscriptionUpsert) SetCreatedAt(v time.Time) *SubscriptionUpsert {
 	u.Set(subscription.FieldCreatedAt, v)
@@ -718,6 +721,13 @@ func (u *SubscriptionUpsertOne) SetEnabled(v bool) *SubscriptionUpsertOne {
 func (u *SubscriptionUpsertOne) UpdateEnabled() *SubscriptionUpsertOne {
 	return u.Update(func(s *SubscriptionUpsert) {
 		s.UpdateEnabled()
+	})
+}
+
+// ClearEnabled clears the value of the "enabled" field.
+func (u *SubscriptionUpsertOne) ClearEnabled() *SubscriptionUpsertOne {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearEnabled()
 	})
 }
 
@@ -1089,6 +1099,13 @@ func (u *SubscriptionUpsertBulk) SetEnabled(v bool) *SubscriptionUpsertBulk {
 func (u *SubscriptionUpsertBulk) UpdateEnabled() *SubscriptionUpsertBulk {
 	return u.Update(func(s *SubscriptionUpsert) {
 		s.UpdateEnabled()
+	})
+}
+
+// ClearEnabled clears the value of the "enabled" field.
+func (u *SubscriptionUpsertBulk) ClearEnabled() *SubscriptionUpsertBulk {
+	return u.Update(func(s *SubscriptionUpsert) {
+		s.ClearEnabled()
 	})
 }
 

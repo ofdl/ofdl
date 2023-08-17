@@ -114,7 +114,7 @@ var (
 		{Name: "head_marker", Type: field.TypeString, Nullable: true},
 		{Name: "stash_id", Type: field.TypeString, Nullable: true},
 		{Name: "organized_at", Type: field.TypeTime, Nullable: true},
-		{Name: "enabled", Type: field.TypeBool, Default: true},
+		{Name: "enabled", Type: field.TypeBool, Nullable: true, Default: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}

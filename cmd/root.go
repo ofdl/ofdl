@@ -4,24 +4,10 @@ import (
 	"context"
 
 	"github.com/defval/di"
+	"github.com/ofdl/ofdl/ofdl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-var App *di.Container
-
-func Execute(app *di.Container) {
-	App = app
-	CLI.Execute()
-}
-
-func Inject(runE interface{}) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		App.ProvideValue(cmd)
-		App.ProvideValue(cmd.Context(), di.As(new(context.Context)))
-		return App.Invoke(runE)
-	}
-}
 
 var CLI = &cobra.Command{
 	Use:   "ofdl",
@@ -58,6 +44,14 @@ A typical ofdl workflow looks like this:
   ofdl stash
 `,
 	Version: Version,
+}
+
+func Inject(runE interface{}) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		ofdl.ProvideValue(cmd)
+		ofdl.ProvideValue(cmd.Context(), di.As(new(context.Context)))
+		return ofdl.Invoke(runE)
+	}
 }
 
 func init() {

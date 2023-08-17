@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/ofdl/ofdl/ent"
 	"github.com/ofdl/ofdl/ent/subscription"
 	"github.com/ofdl/ofdl/ofdl/onlyfans"
@@ -46,7 +47,7 @@ This command will scrape the OnlyFans API for subscriptions and save them to the
 database.
 `,
 	Aliases: []string{"subs", "s"},
-	RunE: Inject(func(ctx context.Context, OnlyFans *onlyfans.OnlyFans, Ent *ent.Client) error {
+	RunE: Inject(func(ctx context.Context, OnlyFans onlyfans.OnlyFansAPI, Ent *ent.Client) error {
 		f, err := OnlyFans.Following()
 		if err != nil {
 			return err
@@ -69,7 +70,13 @@ database.
 					SetHeader(v.Header).
 					SetName(v.Name).
 					SetUsername(v.Username).
-					OnConflict().UpdateAvatar().UpdateHeader().UpdateName().
+					OnConflict(
+						sql.ResolveWithNewValues(),
+						sql.ResolveWith(func(u *sql.UpdateSet) {
+							u.SetIgnore(subscription.FieldID).
+								SetIgnore(subscription.FieldEnabled)
+						}),
+					).
 					Exec(ctx)
 				if err != nil {
 					return err
@@ -93,7 +100,7 @@ database. This command will also update the head marker for each subscription
 that is scraped. This allows for incremental scraping of media posts.
 `,
 	Aliases: []string{"media", "mp"},
-	RunE: Inject(func(ctx context.Context, OnlyFans *onlyfans.OnlyFans, Ent *ent.Client) error {
+	RunE: Inject(func(ctx context.Context, OnlyFans onlyfans.OnlyFansAPI, Ent *ent.Client) error {
 		subs, err := Ent.Subscription.Query().Where(subscription.EnabledEQ(true)).All(ctx)
 		if err != nil {
 			return err
@@ -185,7 +192,7 @@ database.
 `,
 	Aliases: []string{"msg"},
 	// RunE: func(cmd *cobra.Command, args []string) error {
-	RunE: Inject(func(ctx context.Context, OnlyFans *onlyfans.OnlyFans, Ent *ent.Client) error {
+	RunE: Inject(func(ctx context.Context, OnlyFans onlyfans.OnlyFansAPI, Ent *ent.Client) error {
 		subs, err := Ent.Subscription.Query().Where(subscription.EnabledEQ(true)).All(ctx)
 		if err != nil {
 			return err

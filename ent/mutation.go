@@ -3449,9 +3449,22 @@ func (m *SubscriptionMutation) OldEnabled(ctx context.Context) (v bool, err erro
 	return oldValue.Enabled, nil
 }
 
+// ClearEnabled clears the value of the "enabled" field.
+func (m *SubscriptionMutation) ClearEnabled() {
+	m.enabled = nil
+	m.clearedFields[subscription.FieldEnabled] = struct{}{}
+}
+
+// EnabledCleared returns if the "enabled" field was cleared in this mutation.
+func (m *SubscriptionMutation) EnabledCleared() bool {
+	_, ok := m.clearedFields[subscription.FieldEnabled]
+	return ok
+}
+
 // ResetEnabled resets all changes to the "enabled" field.
 func (m *SubscriptionMutation) ResetEnabled() {
 	m.enabled = nil
+	delete(m.clearedFields, subscription.FieldEnabled)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -3874,6 +3887,9 @@ func (m *SubscriptionMutation) ClearedFields() []string {
 	if m.FieldCleared(subscription.FieldOrganizedAt) {
 		fields = append(fields, subscription.FieldOrganizedAt)
 	}
+	if m.FieldCleared(subscription.FieldEnabled) {
+		fields = append(fields, subscription.FieldEnabled)
+	}
 	return fields
 }
 
@@ -3896,6 +3912,9 @@ func (m *SubscriptionMutation) ClearField(name string) error {
 		return nil
 	case subscription.FieldOrganizedAt:
 		m.ClearOrganizedAt()
+		return nil
+	case subscription.FieldEnabled:
+		m.ClearEnabled()
 		return nil
 	}
 	return fmt.Errorf("unknown Subscription nullable field %s", name)
