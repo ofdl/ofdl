@@ -3,6 +3,7 @@ package ent
 //go:generate go run -mod=mod entgo.io/ent/cmd/ent generate --feature sql/upsert --template ./template ./schema
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/spf13/viper"
@@ -12,11 +13,17 @@ import (
 )
 
 func NewEntClient() (*Client, error) {
-	db, err := sql.Open("sqlite", viper.GetString("database"))
+	db, err := sql.Open("sqlite", viper.GetString("database")+"?_pragma=foreign_keys(1)")
 	if err != nil {
 		return nil, err
 	}
 
 	drv := entsql.OpenDB("sqlite3", db)
-	return NewClient(Driver(drv)), nil
+	c := NewClient(Driver(drv))
+
+	if err := c.Schema.Create(context.TODO()); err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }

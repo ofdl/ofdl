@@ -1,21 +1,13 @@
 {{ define "model/additional/downloadable" }}
   {{- if eq $.Name "Media" }}
-    // URL returns the URL of the downloadable media
-    func (m *Media) URL() string {
-      return m.Full
-    }
-
+    // Directory returns the directory in which the {{ $.Name }} is stored
     func (m *Media) Directory() string {
       return fmt.Sprintf("/%s/posts/%d", m.Edges.Post.Edges.Subscription.Username, m.Edges.Post.ID)
     }
   {{- end }}
 
   {{- if eq $.Name "MessageMedia" }}
-    // URL returns the URL of the downloadable media
-    func (m *MessageMedia) URL() string {
-      return m.Src
-    }
-
+    // Directory returns the directory in which the {{ $.Name }} is stored
     func (m MessageMedia) Directory() string {
 	    return fmt.Sprintf("/%s/messages/%d", m.Edges.Message.Edges.Subscription.Username, m.Edges.Message.ID)
     }
@@ -23,11 +15,13 @@
 
   {{- if or (eq $.Name "Media") (eq $.Name "MessageMedia") }}
 
+    // Filename returns the filename of the {{ $.Name }}
     func ({{ $.Receiver }} *{{ $.Name }}) Filename() string {
-      u, _ := url.Parse({{ $.Receiver }}.URL())
+      u, _ := url.Parse({{ $.Receiver }}.GetFull())
       return path.Base(u.Path)
     }
 
+    // MarkDownloaded marks the media as downloaded
     func ({{ $.Receiver }} *{{ $.Name }}) MarkDownloaded(ctx context.Context) error {
       return {{ $.Receiver }}.Update().SetDownloadedAt(time.Now()).Exec(ctx)
     }

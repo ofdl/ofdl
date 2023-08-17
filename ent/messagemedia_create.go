@@ -35,16 +35,16 @@ func (mmc *MessageMediaCreate) SetType(s string) *MessageMediaCreate {
 	return mmc
 }
 
-// SetSrc sets the "src" field.
-func (mmc *MessageMediaCreate) SetSrc(s string) *MessageMediaCreate {
-	mmc.mutation.SetSrc(s)
+// SetFull sets the "full" field.
+func (mmc *MessageMediaCreate) SetFull(s string) *MessageMediaCreate {
+	mmc.mutation.SetFull(s)
 	return mmc
 }
 
-// SetNillableSrc sets the "src" field if the given value is not nil.
-func (mmc *MessageMediaCreate) SetNillableSrc(s *string) *MessageMediaCreate {
+// SetNillableFull sets the "full" field if the given value is not nil.
+func (mmc *MessageMediaCreate) SetNillableFull(s *string) *MessageMediaCreate {
 	if s != nil {
-		mmc.SetSrc(*s)
+		mmc.SetFull(*s)
 	}
 	return mmc
 }
@@ -66,6 +66,14 @@ func (mmc *MessageMediaCreate) SetNillableDownloadedAt(t *time.Time) *MessageMed
 // SetStashID sets the "stash_id" field.
 func (mmc *MessageMediaCreate) SetStashID(s string) *MessageMediaCreate {
 	mmc.mutation.SetStashID(s)
+	return mmc
+}
+
+// SetNillableStashID sets the "stash_id" field if the given value is not nil.
+func (mmc *MessageMediaCreate) SetNillableStashID(s *string) *MessageMediaCreate {
+	if s != nil {
+		mmc.SetStashID(*s)
+	}
 	return mmc
 }
 
@@ -175,9 +183,6 @@ func (mmc *MessageMediaCreate) check() error {
 	if _, ok := mmc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "MessageMedia.type"`)}
 	}
-	if _, ok := mmc.mutation.StashID(); !ok {
-		return &ValidationError{Name: "stash_id", err: errors.New(`ent: missing required field "MessageMedia.stash_id"`)}
-	}
 	if _, ok := mmc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "MessageMedia.created_at"`)}
 	}
@@ -229,9 +234,9 @@ func (mmc *MessageMediaCreate) createSpec() (*MessageMedia, *sqlgraph.CreateSpec
 		_spec.SetField(messagemedia.FieldType, field.TypeString, value)
 		_node.Type = value
 	}
-	if value, ok := mmc.mutation.Src(); ok {
-		_spec.SetField(messagemedia.FieldSrc, field.TypeString, value)
-		_node.Src = value
+	if value, ok := mmc.mutation.Full(); ok {
+		_spec.SetField(messagemedia.FieldFull, field.TypeString, value)
+		_node.Full = value
 	}
 	if value, ok := mmc.mutation.DownloadedAt(); ok {
 		_spec.SetField(messagemedia.FieldDownloadedAt, field.TypeTime, value)
@@ -346,21 +351,21 @@ func (u *MessageMediaUpsert) UpdateType() *MessageMediaUpsert {
 	return u
 }
 
-// SetSrc sets the "src" field.
-func (u *MessageMediaUpsert) SetSrc(v string) *MessageMediaUpsert {
-	u.Set(messagemedia.FieldSrc, v)
+// SetFull sets the "full" field.
+func (u *MessageMediaUpsert) SetFull(v string) *MessageMediaUpsert {
+	u.Set(messagemedia.FieldFull, v)
 	return u
 }
 
-// UpdateSrc sets the "src" field to the value that was provided on create.
-func (u *MessageMediaUpsert) UpdateSrc() *MessageMediaUpsert {
-	u.SetExcluded(messagemedia.FieldSrc)
+// UpdateFull sets the "full" field to the value that was provided on create.
+func (u *MessageMediaUpsert) UpdateFull() *MessageMediaUpsert {
+	u.SetExcluded(messagemedia.FieldFull)
 	return u
 }
 
-// ClearSrc clears the value of the "src" field.
-func (u *MessageMediaUpsert) ClearSrc() *MessageMediaUpsert {
-	u.SetNull(messagemedia.FieldSrc)
+// ClearFull clears the value of the "full" field.
+func (u *MessageMediaUpsert) ClearFull() *MessageMediaUpsert {
+	u.SetNull(messagemedia.FieldFull)
 	return u
 }
 
@@ -391,6 +396,12 @@ func (u *MessageMediaUpsert) SetStashID(v string) *MessageMediaUpsert {
 // UpdateStashID sets the "stash_id" field to the value that was provided on create.
 func (u *MessageMediaUpsert) UpdateStashID() *MessageMediaUpsert {
 	u.SetExcluded(messagemedia.FieldStashID)
+	return u
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (u *MessageMediaUpsert) ClearStashID() *MessageMediaUpsert {
+	u.SetNull(messagemedia.FieldStashID)
 	return u
 }
 
@@ -512,24 +523,24 @@ func (u *MessageMediaUpsertOne) UpdateType() *MessageMediaUpsertOne {
 	})
 }
 
-// SetSrc sets the "src" field.
-func (u *MessageMediaUpsertOne) SetSrc(v string) *MessageMediaUpsertOne {
+// SetFull sets the "full" field.
+func (u *MessageMediaUpsertOne) SetFull(v string) *MessageMediaUpsertOne {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.SetSrc(v)
+		s.SetFull(v)
 	})
 }
 
-// UpdateSrc sets the "src" field to the value that was provided on create.
-func (u *MessageMediaUpsertOne) UpdateSrc() *MessageMediaUpsertOne {
+// UpdateFull sets the "full" field to the value that was provided on create.
+func (u *MessageMediaUpsertOne) UpdateFull() *MessageMediaUpsertOne {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.UpdateSrc()
+		s.UpdateFull()
 	})
 }
 
-// ClearSrc clears the value of the "src" field.
-func (u *MessageMediaUpsertOne) ClearSrc() *MessageMediaUpsertOne {
+// ClearFull clears the value of the "full" field.
+func (u *MessageMediaUpsertOne) ClearFull() *MessageMediaUpsertOne {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.ClearSrc()
+		s.ClearFull()
 	})
 }
 
@@ -565,6 +576,13 @@ func (u *MessageMediaUpsertOne) SetStashID(v string) *MessageMediaUpsertOne {
 func (u *MessageMediaUpsertOne) UpdateStashID() *MessageMediaUpsertOne {
 	return u.Update(func(s *MessageMediaUpsert) {
 		s.UpdateStashID()
+	})
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (u *MessageMediaUpsertOne) ClearStashID() *MessageMediaUpsertOne {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.ClearStashID()
 	})
 }
 
@@ -855,24 +873,24 @@ func (u *MessageMediaUpsertBulk) UpdateType() *MessageMediaUpsertBulk {
 	})
 }
 
-// SetSrc sets the "src" field.
-func (u *MessageMediaUpsertBulk) SetSrc(v string) *MessageMediaUpsertBulk {
+// SetFull sets the "full" field.
+func (u *MessageMediaUpsertBulk) SetFull(v string) *MessageMediaUpsertBulk {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.SetSrc(v)
+		s.SetFull(v)
 	})
 }
 
-// UpdateSrc sets the "src" field to the value that was provided on create.
-func (u *MessageMediaUpsertBulk) UpdateSrc() *MessageMediaUpsertBulk {
+// UpdateFull sets the "full" field to the value that was provided on create.
+func (u *MessageMediaUpsertBulk) UpdateFull() *MessageMediaUpsertBulk {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.UpdateSrc()
+		s.UpdateFull()
 	})
 }
 
-// ClearSrc clears the value of the "src" field.
-func (u *MessageMediaUpsertBulk) ClearSrc() *MessageMediaUpsertBulk {
+// ClearFull clears the value of the "full" field.
+func (u *MessageMediaUpsertBulk) ClearFull() *MessageMediaUpsertBulk {
 	return u.Update(func(s *MessageMediaUpsert) {
-		s.ClearSrc()
+		s.ClearFull()
 	})
 }
 
@@ -908,6 +926,13 @@ func (u *MessageMediaUpsertBulk) SetStashID(v string) *MessageMediaUpsertBulk {
 func (u *MessageMediaUpsertBulk) UpdateStashID() *MessageMediaUpsertBulk {
 	return u.Update(func(s *MessageMediaUpsert) {
 		s.UpdateStashID()
+	})
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (u *MessageMediaUpsertBulk) ClearStashID() *MessageMediaUpsertBulk {
+	return u.Update(func(s *MessageMediaUpsert) {
+		s.ClearStashID()
 	})
 }
 

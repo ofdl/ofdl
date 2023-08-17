@@ -65,9 +65,9 @@ func Type(v string) predicate.MessageMedia {
 	return predicate.MessageMedia(sql.FieldEQ(FieldType, v))
 }
 
-// Src applies equality check predicate on the "src" field. It's identical to SrcEQ.
-func Src(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldEQ(FieldSrc, v))
+// Full applies equality check predicate on the "full" field. It's identical to FullEQ.
+func Full(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEQ(FieldFull, v))
 }
 
 // DownloadedAt applies equality check predicate on the "downloaded_at" field. It's identical to DownloadedAtEQ.
@@ -180,79 +180,79 @@ func TypeContainsFold(v string) predicate.MessageMedia {
 	return predicate.MessageMedia(sql.FieldContainsFold(FieldType, v))
 }
 
-// SrcEQ applies the EQ predicate on the "src" field.
-func SrcEQ(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldEQ(FieldSrc, v))
+// FullEQ applies the EQ predicate on the "full" field.
+func FullEQ(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEQ(FieldFull, v))
 }
 
-// SrcNEQ applies the NEQ predicate on the "src" field.
-func SrcNEQ(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldNEQ(FieldSrc, v))
+// FullNEQ applies the NEQ predicate on the "full" field.
+func FullNEQ(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNEQ(FieldFull, v))
 }
 
-// SrcIn applies the In predicate on the "src" field.
-func SrcIn(vs ...string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldIn(FieldSrc, vs...))
+// FullIn applies the In predicate on the "full" field.
+func FullIn(vs ...string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldIn(FieldFull, vs...))
 }
 
-// SrcNotIn applies the NotIn predicate on the "src" field.
-func SrcNotIn(vs ...string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldNotIn(FieldSrc, vs...))
+// FullNotIn applies the NotIn predicate on the "full" field.
+func FullNotIn(vs ...string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNotIn(FieldFull, vs...))
 }
 
-// SrcGT applies the GT predicate on the "src" field.
-func SrcGT(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldGT(FieldSrc, v))
+// FullGT applies the GT predicate on the "full" field.
+func FullGT(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldGT(FieldFull, v))
 }
 
-// SrcGTE applies the GTE predicate on the "src" field.
-func SrcGTE(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldGTE(FieldSrc, v))
+// FullGTE applies the GTE predicate on the "full" field.
+func FullGTE(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldGTE(FieldFull, v))
 }
 
-// SrcLT applies the LT predicate on the "src" field.
-func SrcLT(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldLT(FieldSrc, v))
+// FullLT applies the LT predicate on the "full" field.
+func FullLT(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldLT(FieldFull, v))
 }
 
-// SrcLTE applies the LTE predicate on the "src" field.
-func SrcLTE(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldLTE(FieldSrc, v))
+// FullLTE applies the LTE predicate on the "full" field.
+func FullLTE(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldLTE(FieldFull, v))
 }
 
-// SrcContains applies the Contains predicate on the "src" field.
-func SrcContains(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldContains(FieldSrc, v))
+// FullContains applies the Contains predicate on the "full" field.
+func FullContains(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldContains(FieldFull, v))
 }
 
-// SrcHasPrefix applies the HasPrefix predicate on the "src" field.
-func SrcHasPrefix(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldHasPrefix(FieldSrc, v))
+// FullHasPrefix applies the HasPrefix predicate on the "full" field.
+func FullHasPrefix(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldHasPrefix(FieldFull, v))
 }
 
-// SrcHasSuffix applies the HasSuffix predicate on the "src" field.
-func SrcHasSuffix(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldHasSuffix(FieldSrc, v))
+// FullHasSuffix applies the HasSuffix predicate on the "full" field.
+func FullHasSuffix(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldHasSuffix(FieldFull, v))
 }
 
-// SrcIsNil applies the IsNil predicate on the "src" field.
-func SrcIsNil() predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldIsNull(FieldSrc))
+// FullIsNil applies the IsNil predicate on the "full" field.
+func FullIsNil() predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldIsNull(FieldFull))
 }
 
-// SrcNotNil applies the NotNil predicate on the "src" field.
-func SrcNotNil() predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldNotNull(FieldSrc))
+// FullNotNil applies the NotNil predicate on the "full" field.
+func FullNotNil() predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNotNull(FieldFull))
 }
 
-// SrcEqualFold applies the EqualFold predicate on the "src" field.
-func SrcEqualFold(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldEqualFold(FieldSrc, v))
+// FullEqualFold applies the EqualFold predicate on the "full" field.
+func FullEqualFold(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldEqualFold(FieldFull, v))
 }
 
-// SrcContainsFold applies the ContainsFold predicate on the "src" field.
-func SrcContainsFold(v string) predicate.MessageMedia {
-	return predicate.MessageMedia(sql.FieldContainsFold(FieldSrc, v))
+// FullContainsFold applies the ContainsFold predicate on the "full" field.
+func FullContainsFold(v string) predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldContainsFold(FieldFull, v))
 }
 
 // DownloadedAtEQ applies the EQ predicate on the "downloaded_at" field.
@@ -358,6 +358,16 @@ func StashIDHasPrefix(v string) predicate.MessageMedia {
 // StashIDHasSuffix applies the HasSuffix predicate on the "stash_id" field.
 func StashIDHasSuffix(v string) predicate.MessageMedia {
 	return predicate.MessageMedia(sql.FieldHasSuffix(FieldStashID, v))
+}
+
+// StashIDIsNil applies the IsNil predicate on the "stash_id" field.
+func StashIDIsNil() predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldIsNull(FieldStashID))
+}
+
+// StashIDNotNil applies the NotNil predicate on the "stash_id" field.
+func StashIDNotNil() predicate.MessageMedia {
+	return predicate.MessageMedia(sql.FieldNotNull(FieldStashID))
 }
 
 // StashIDEqualFold applies the EqualFold predicate on the "stash_id" field.

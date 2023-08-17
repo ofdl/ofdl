@@ -20,11 +20,11 @@ func init() {
 	mediaFields := schema.Media{}.Fields()
 	_ = mediaFields
 	// mediaDescCreatedAt is the schema descriptor for created_at field.
-	mediaDescCreatedAt := mediaFields[8].Descriptor()
+	mediaDescCreatedAt := mediaFields[7].Descriptor()
 	// media.DefaultCreatedAt holds the default value on creation for the created_at field.
 	media.DefaultCreatedAt = mediaDescCreatedAt.Default.(func() time.Time)
 	// mediaDescUpdatedAt is the schema descriptor for updated_at field.
-	mediaDescUpdatedAt := mediaFields[9].Descriptor()
+	mediaDescUpdatedAt := mediaFields[8].Descriptor()
 	// media.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	media.DefaultUpdatedAt = mediaDescUpdatedAt.Default.(func() time.Time)
 	// media.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

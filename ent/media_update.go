@@ -61,12 +61,6 @@ func (mu *MediaUpdate) ClearFull() *MediaUpdate {
 	return mu
 }
 
-// SetPostedAt sets the "posted_at" field.
-func (mu *MediaUpdate) SetPostedAt(s string) *MediaUpdate {
-	mu.mutation.SetPostedAt(s)
-	return mu
-}
-
 // SetDownloadedAt sets the "downloaded_at" field.
 func (mu *MediaUpdate) SetDownloadedAt(t time.Time) *MediaUpdate {
 	mu.mutation.SetDownloadedAt(t)
@@ -228,9 +222,6 @@ func (mu *MediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if mu.mutation.FullCleared() {
 		_spec.ClearField(media.FieldFull, field.TypeString)
 	}
-	if value, ok := mu.mutation.PostedAt(); ok {
-		_spec.SetField(media.FieldPostedAt, field.TypeString, value)
-	}
 	if value, ok := mu.mutation.DownloadedAt(); ok {
 		_spec.SetField(media.FieldDownloadedAt, field.TypeTime, value)
 	}
@@ -333,12 +324,6 @@ func (muo *MediaUpdateOne) SetNillableFull(s *string) *MediaUpdateOne {
 // ClearFull clears the value of the "full" field.
 func (muo *MediaUpdateOne) ClearFull() *MediaUpdateOne {
 	muo.mutation.ClearFull()
-	return muo
-}
-
-// SetPostedAt sets the "posted_at" field.
-func (muo *MediaUpdateOne) SetPostedAt(s string) *MediaUpdateOne {
-	muo.mutation.SetPostedAt(s)
 	return muo
 }
 
@@ -532,9 +517,6 @@ func (muo *MediaUpdateOne) sqlSave(ctx context.Context) (_node *Media, err error
 	}
 	if muo.mutation.FullCleared() {
 		_spec.ClearField(media.FieldFull, field.TypeString)
-	}
-	if value, ok := muo.mutation.PostedAt(); ok {
-		_spec.SetField(media.FieldPostedAt, field.TypeString, value)
 	}
 	if value, ok := muo.mutation.DownloadedAt(); ok {
 		_spec.SetField(media.FieldDownloadedAt, field.TypeTime, value)

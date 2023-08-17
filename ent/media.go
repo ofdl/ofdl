@@ -27,8 +27,6 @@ type Media struct {
 	Type string `json:"type,omitempty"`
 	// Full holds the value of the "full" field.
 	Full string `json:"full,omitempty"`
-	// PostedAt holds the value of the "posted_at" field.
-	PostedAt string `json:"posted_at,omitempty"`
 	// DownloadedAt holds the value of the "downloaded_at" field.
 	DownloadedAt time.Time `json:"downloaded_at,omitempty"`
 	// StashID holds the value of the "stash_id" field.
@@ -74,7 +72,7 @@ func (*Media) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case media.FieldID, media.FieldPostID:
 			values[i] = new(sql.NullInt64)
-		case media.FieldType, media.FieldFull, media.FieldPostedAt, media.FieldStashID:
+		case media.FieldType, media.FieldFull, media.FieldStashID:
 			values[i] = new(sql.NullString)
 		case media.FieldDownloadedAt, media.FieldOrganizedAt, media.FieldCreatedAt, media.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -116,12 +114,6 @@ func (m *Media) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field full", values[i])
 			} else if value.Valid {
 				m.Full = value.String
-			}
-		case media.FieldPostedAt:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field posted_at", values[i])
-			} else if value.Valid {
-				m.PostedAt = value.String
 			}
 		case media.FieldDownloadedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -203,9 +195,6 @@ func (m *Media) String() string {
 	builder.WriteString("full=")
 	builder.WriteString(m.Full)
 	builder.WriteString(", ")
-	builder.WriteString("posted_at=")
-	builder.WriteString(m.PostedAt)
-	builder.WriteString(", ")
 	builder.WriteString("downloaded_at=")
 	builder.WriteString(m.DownloadedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
@@ -224,22 +213,70 @@ func (m *Media) String() string {
 	return builder.String()
 }
 
-// URL returns the URL of the downloadable media
-func (m *Media) URL() string {
-	return m.Full
-}
-
+// Directory returns the directory in which the Media is stored
 func (m *Media) Directory() string {
 	return fmt.Sprintf("/%s/posts/%d", m.Edges.Post.Edges.Subscription.Username, m.Edges.Post.ID)
 }
 
+// Filename returns the filename of the Media
 func (m *Media) Filename() string {
-	u, _ := url.Parse(m.URL())
+	u, _ := url.Parse(m.GetFull())
 	return path.Base(u.Path)
 }
 
+// MarkDownloaded marks the media as downloaded
 func (m *Media) MarkDownloaded(ctx context.Context) error {
 	return m.Update().SetDownloadedAt(time.Now()).Exec(ctx)
+}
+
+// GetPostID returns the post_id column
+func (m *Media) GetPostID() int {
+	return m.PostID
+}
+
+// GetType returns the type column
+func (m *Media) GetType() string {
+	return m.Type
+}
+
+// GetFull returns the full column
+func (m *Media) GetFull() string {
+	return m.Full
+}
+
+// GetDownloadedAt returns the downloaded_at column
+func (m *Media) GetDownloadedAt() time.Time {
+	return m.DownloadedAt
+}
+
+// GetStashID returns the stash_id column
+func (m *Media) GetStashID() string {
+	return m.StashID
+}
+
+// GetOrganizedAt returns the organized_at column
+func (m *Media) GetOrganizedAt() time.Time {
+	return m.OrganizedAt
+}
+
+// GetCreatedAt returns the created_at column
+func (m *Media) GetCreatedAt() time.Time {
+	return m.CreatedAt
+}
+
+// GetUpdatedAt returns the updated_at column
+func (m *Media) GetUpdatedAt() time.Time {
+	return m.UpdatedAt
+}
+
+// Organize marks the Media as organized and sets the stash ID.
+func (m *Media) Organize(ctx context.Context, id string) error {
+	return m.Update().SetOrganizedAt(time.Now()).SetStashID(id).Exec(ctx)
+}
+
+// MarkOrganized marks the Media as organized.
+func (m *Media) MarkOrganized(ctx context.Context) error {
+	return m.Update().SetOrganizedAt(time.Now()).Exec(ctx)
 }
 
 // MediaSlice is a parsable slice of Media.

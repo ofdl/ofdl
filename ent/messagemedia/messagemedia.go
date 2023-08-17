@@ -18,8 +18,8 @@ const (
 	FieldMessageID = "message_id"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
-	// FieldSrc holds the string denoting the src field in the database.
-	FieldSrc = "src"
+	// FieldFull holds the string denoting the full field in the database.
+	FieldFull = "src"
 	// FieldDownloadedAt holds the string denoting the downloaded_at field in the database.
 	FieldDownloadedAt = "downloaded_at"
 	// FieldStashID holds the string denoting the stash_id field in the database.
@@ -48,7 +48,7 @@ var Columns = []string{
 	FieldID,
 	FieldMessageID,
 	FieldType,
-	FieldSrc,
+	FieldFull,
 	FieldDownloadedAt,
 	FieldStashID,
 	FieldOrganizedAt,
@@ -95,9 +95,9 @@ func ByType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldType, opts...).ToFunc()
 }
 
-// BySrc orders the results by the src field.
-func BySrc(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSrc, opts...).ToFunc()
+// ByFull orders the results by the full field.
+func ByFull(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFull, opts...).ToFunc()
 }
 
 // ByDownloadedAt orders the results by the downloaded_at field.

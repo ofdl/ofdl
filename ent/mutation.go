@@ -43,7 +43,6 @@ type MediaMutation struct {
 	id            *int
 	_type         *string
 	full          *string
-	posted_at     *string
 	downloaded_at *time.Time
 	stash_id      *string
 	organized_at  *time.Time
@@ -280,42 +279,6 @@ func (m *MediaMutation) FullCleared() bool {
 func (m *MediaMutation) ResetFull() {
 	m.full = nil
 	delete(m.clearedFields, media.FieldFull)
-}
-
-// SetPostedAt sets the "posted_at" field.
-func (m *MediaMutation) SetPostedAt(s string) {
-	m.posted_at = &s
-}
-
-// PostedAt returns the value of the "posted_at" field in the mutation.
-func (m *MediaMutation) PostedAt() (r string, exists bool) {
-	v := m.posted_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldPostedAt returns the old "posted_at" field's value of the Media entity.
-// If the Media object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MediaMutation) OldPostedAt(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldPostedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldPostedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPostedAt: %w", err)
-	}
-	return oldValue.PostedAt, nil
-}
-
-// ResetPostedAt resets all changes to the "posted_at" field.
-func (m *MediaMutation) ResetPostedAt() {
-	m.posted_at = nil
 }
 
 // SetDownloadedAt sets the "downloaded_at" field.
@@ -597,7 +560,7 @@ func (m *MediaMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MediaMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 8)
 	if m.post != nil {
 		fields = append(fields, media.FieldPostID)
 	}
@@ -606,9 +569,6 @@ func (m *MediaMutation) Fields() []string {
 	}
 	if m.full != nil {
 		fields = append(fields, media.FieldFull)
-	}
-	if m.posted_at != nil {
-		fields = append(fields, media.FieldPostedAt)
 	}
 	if m.downloaded_at != nil {
 		fields = append(fields, media.FieldDownloadedAt)
@@ -639,8 +599,6 @@ func (m *MediaMutation) Field(name string) (ent.Value, bool) {
 		return m.GetType()
 	case media.FieldFull:
 		return m.Full()
-	case media.FieldPostedAt:
-		return m.PostedAt()
 	case media.FieldDownloadedAt:
 		return m.DownloadedAt()
 	case media.FieldStashID:
@@ -666,8 +624,6 @@ func (m *MediaMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldType(ctx)
 	case media.FieldFull:
 		return m.OldFull(ctx)
-	case media.FieldPostedAt:
-		return m.OldPostedAt(ctx)
 	case media.FieldDownloadedAt:
 		return m.OldDownloadedAt(ctx)
 	case media.FieldStashID:
@@ -707,13 +663,6 @@ func (m *MediaMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetFull(v)
-		return nil
-	case media.FieldPostedAt:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetPostedAt(v)
 		return nil
 	case media.FieldDownloadedAt:
 		v, ok := value.(time.Time)
@@ -837,9 +786,6 @@ func (m *MediaMutation) ResetField(name string) error {
 		return nil
 	case media.FieldFull:
 		m.ResetFull()
-		return nil
-	case media.FieldPostedAt:
-		m.ResetPostedAt()
 		return nil
 	case media.FieldDownloadedAt:
 		m.ResetDownloadedAt()
@@ -1522,7 +1468,7 @@ type MessageMediaMutation struct {
 	typ            string
 	id             *int
 	_type          *string
-	src            *string
+	full           *string
 	downloaded_at  *time.Time
 	stash_id       *string
 	organized_at   *time.Time
@@ -1712,53 +1658,53 @@ func (m *MessageMediaMutation) ResetType() {
 	m._type = nil
 }
 
-// SetSrc sets the "src" field.
-func (m *MessageMediaMutation) SetSrc(s string) {
-	m.src = &s
+// SetFull sets the "full" field.
+func (m *MessageMediaMutation) SetFull(s string) {
+	m.full = &s
 }
 
-// Src returns the value of the "src" field in the mutation.
-func (m *MessageMediaMutation) Src() (r string, exists bool) {
-	v := m.src
+// Full returns the value of the "full" field in the mutation.
+func (m *MessageMediaMutation) Full() (r string, exists bool) {
+	v := m.full
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldSrc returns the old "src" field's value of the MessageMedia entity.
+// OldFull returns the old "full" field's value of the MessageMedia entity.
 // If the MessageMedia object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MessageMediaMutation) OldSrc(ctx context.Context) (v string, err error) {
+func (m *MessageMediaMutation) OldFull(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSrc is only allowed on UpdateOne operations")
+		return v, errors.New("OldFull is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSrc requires an ID field in the mutation")
+		return v, errors.New("OldFull requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSrc: %w", err)
+		return v, fmt.Errorf("querying old value for OldFull: %w", err)
 	}
-	return oldValue.Src, nil
+	return oldValue.Full, nil
 }
 
-// ClearSrc clears the value of the "src" field.
-func (m *MessageMediaMutation) ClearSrc() {
-	m.src = nil
-	m.clearedFields[messagemedia.FieldSrc] = struct{}{}
+// ClearFull clears the value of the "full" field.
+func (m *MessageMediaMutation) ClearFull() {
+	m.full = nil
+	m.clearedFields[messagemedia.FieldFull] = struct{}{}
 }
 
-// SrcCleared returns if the "src" field was cleared in this mutation.
-func (m *MessageMediaMutation) SrcCleared() bool {
-	_, ok := m.clearedFields[messagemedia.FieldSrc]
+// FullCleared returns if the "full" field was cleared in this mutation.
+func (m *MessageMediaMutation) FullCleared() bool {
+	_, ok := m.clearedFields[messagemedia.FieldFull]
 	return ok
 }
 
-// ResetSrc resets all changes to the "src" field.
-func (m *MessageMediaMutation) ResetSrc() {
-	m.src = nil
-	delete(m.clearedFields, messagemedia.FieldSrc)
+// ResetFull resets all changes to the "full" field.
+func (m *MessageMediaMutation) ResetFull() {
+	m.full = nil
+	delete(m.clearedFields, messagemedia.FieldFull)
 }
 
 // SetDownloadedAt sets the "downloaded_at" field.
@@ -1841,9 +1787,22 @@ func (m *MessageMediaMutation) OldStashID(ctx context.Context) (v string, err er
 	return oldValue.StashID, nil
 }
 
+// ClearStashID clears the value of the "stash_id" field.
+func (m *MessageMediaMutation) ClearStashID() {
+	m.stash_id = nil
+	m.clearedFields[messagemedia.FieldStashID] = struct{}{}
+}
+
+// StashIDCleared returns if the "stash_id" field was cleared in this mutation.
+func (m *MessageMediaMutation) StashIDCleared() bool {
+	_, ok := m.clearedFields[messagemedia.FieldStashID]
+	return ok
+}
+
 // ResetStashID resets all changes to the "stash_id" field.
 func (m *MessageMediaMutation) ResetStashID() {
 	m.stash_id = nil
+	delete(m.clearedFields, messagemedia.FieldStashID)
 }
 
 // SetOrganizedAt sets the "organized_at" field.
@@ -2034,8 +1993,8 @@ func (m *MessageMediaMutation) Fields() []string {
 	if m._type != nil {
 		fields = append(fields, messagemedia.FieldType)
 	}
-	if m.src != nil {
-		fields = append(fields, messagemedia.FieldSrc)
+	if m.full != nil {
+		fields = append(fields, messagemedia.FieldFull)
 	}
 	if m.downloaded_at != nil {
 		fields = append(fields, messagemedia.FieldDownloadedAt)
@@ -2064,8 +2023,8 @@ func (m *MessageMediaMutation) Field(name string) (ent.Value, bool) {
 		return m.MessageID()
 	case messagemedia.FieldType:
 		return m.GetType()
-	case messagemedia.FieldSrc:
-		return m.Src()
+	case messagemedia.FieldFull:
+		return m.Full()
 	case messagemedia.FieldDownloadedAt:
 		return m.DownloadedAt()
 	case messagemedia.FieldStashID:
@@ -2089,8 +2048,8 @@ func (m *MessageMediaMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldMessageID(ctx)
 	case messagemedia.FieldType:
 		return m.OldType(ctx)
-	case messagemedia.FieldSrc:
-		return m.OldSrc(ctx)
+	case messagemedia.FieldFull:
+		return m.OldFull(ctx)
 	case messagemedia.FieldDownloadedAt:
 		return m.OldDownloadedAt(ctx)
 	case messagemedia.FieldStashID:
@@ -2124,12 +2083,12 @@ func (m *MessageMediaMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetType(v)
 		return nil
-	case messagemedia.FieldSrc:
+	case messagemedia.FieldFull:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetSrc(v)
+		m.SetFull(v)
 		return nil
 	case messagemedia.FieldDownloadedAt:
 		v, ok := value.(time.Time)
@@ -2199,11 +2158,14 @@ func (m *MessageMediaMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *MessageMediaMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(messagemedia.FieldSrc) {
-		fields = append(fields, messagemedia.FieldSrc)
+	if m.FieldCleared(messagemedia.FieldFull) {
+		fields = append(fields, messagemedia.FieldFull)
 	}
 	if m.FieldCleared(messagemedia.FieldDownloadedAt) {
 		fields = append(fields, messagemedia.FieldDownloadedAt)
+	}
+	if m.FieldCleared(messagemedia.FieldStashID) {
+		fields = append(fields, messagemedia.FieldStashID)
 	}
 	if m.FieldCleared(messagemedia.FieldOrganizedAt) {
 		fields = append(fields, messagemedia.FieldOrganizedAt)
@@ -2222,11 +2184,14 @@ func (m *MessageMediaMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *MessageMediaMutation) ClearField(name string) error {
 	switch name {
-	case messagemedia.FieldSrc:
-		m.ClearSrc()
+	case messagemedia.FieldFull:
+		m.ClearFull()
 		return nil
 	case messagemedia.FieldDownloadedAt:
 		m.ClearDownloadedAt()
+		return nil
+	case messagemedia.FieldStashID:
+		m.ClearStashID()
 		return nil
 	case messagemedia.FieldOrganizedAt:
 		m.ClearOrganizedAt()
@@ -2245,8 +2210,8 @@ func (m *MessageMediaMutation) ResetField(name string) error {
 	case messagemedia.FieldType:
 		m.ResetType()
 		return nil
-	case messagemedia.FieldSrc:
-		m.ResetSrc()
+	case messagemedia.FieldFull:
+		m.ResetFull()
 		return nil
 	case messagemedia.FieldDownloadedAt:
 		m.ResetDownloadedAt()

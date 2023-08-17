@@ -1,0 +1,17 @@
+{{ define "model/additional/organizable" }}
+  {{ range $field := $.Fields }}
+    {{ if eq $field.Name "organized_at" }}
+      // MarkOrganized marks the {{ $.Name }} as organized.
+      func ({{ $.Receiver }} *{{ $.Name }}) MarkOrganized(ctx context.Context) error {
+        return {{ $.Receiver }}.Update().SetOrganizedAt(time.Now()).Exec(ctx)
+      }
+    {{ end }}
+
+    {{ if eq $field.Name "stash_id" }}
+      // Organize marks the {{ $.Name }} as organized and sets the stash ID.
+      func ({{ $.Receiver }} *{{ $.Name }}) Organize(ctx context.Context, id string) error {
+        return {{ $.Receiver }}.Update().SetOrganizedAt(time.Now()).SetStashID(id).Exec(ctx)
+      }
+    {{ end }}
+  {{ end }}
+{{ end }}

@@ -168,5 +168,20 @@ func (m *Message) String() string {
 	return builder.String()
 }
 
+// GetSubscriptionID returns the subscription_id column
+func (m *Message) GetSubscriptionID() int {
+	return m.SubscriptionID
+}
+
+// GetText returns the text column
+func (m *Message) GetText() string {
+	return m.Text
+}
+
+// GetPostedAt returns the posted_at column
+func (m *Message) GetPostedAt() string {
+	return m.PostedAt
+}
+
 // Messages is a parsable slice of Message.
 type Messages []*Message

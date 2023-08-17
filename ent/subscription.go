@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -243,6 +244,66 @@ func (s *Subscription) String() string {
 	builder.WriteString(s.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// GetAvatar returns the avatar column
+func (s *Subscription) GetAvatar() string {
+	return s.Avatar
+}
+
+// GetHeader returns the header column
+func (s *Subscription) GetHeader() string {
+	return s.Header
+}
+
+// GetName returns the name column
+func (s *Subscription) GetName() string {
+	return s.Name
+}
+
+// GetUsername returns the username column
+func (s *Subscription) GetUsername() string {
+	return s.Username
+}
+
+// GetHeadMarker returns the head_marker column
+func (s *Subscription) GetHeadMarker() string {
+	return s.HeadMarker
+}
+
+// GetStashID returns the stash_id column
+func (s *Subscription) GetStashID() string {
+	return s.StashID
+}
+
+// GetOrganizedAt returns the organized_at column
+func (s *Subscription) GetOrganizedAt() time.Time {
+	return s.OrganizedAt
+}
+
+// GetEnabled returns the enabled column
+func (s *Subscription) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetCreatedAt returns the created_at column
+func (s *Subscription) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the updated_at column
+func (s *Subscription) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// Organize marks the Subscription as organized and sets the stash ID.
+func (s *Subscription) Organize(ctx context.Context, id string) error {
+	return s.Update().SetOrganizedAt(time.Now()).SetStashID(id).Exec(ctx)
+}
+
+// MarkOrganized marks the Subscription as organized.
+func (s *Subscription) MarkOrganized(ctx context.Context) error {
+	return s.Update().SetOrganizedAt(time.Now()).Exec(ctx)
 }
 
 // Subscriptions is a parsable slice of Subscription.

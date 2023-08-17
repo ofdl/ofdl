@@ -57,12 +57,12 @@ func (d *LocalDownloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 	go func() {
 		defer close(progress)
 
-		if m.URL() == "" {
+		if m.GetFull() == "" {
 			done <- m.MarkDownloaded(context.TODO())
 			return
 		}
 
-		resp, err := http.Get(m.URL())
+		resp, err := http.Get(m.GetFull())
 		if err != nil {
 			done <- err
 			return

@@ -66,7 +66,7 @@ func (d *Aria2Downloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 	go func() {
 		defer close(progress)
 
-		if m.URL() == "" {
+		if m.GetFull() == "" {
 			done <- m.MarkDownloaded(context.TODO())
 			return
 		}
@@ -76,7 +76,7 @@ func (d *Aria2Downloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 			dir = fmt.Sprintf("%s%s", d.root, strings.ReplaceAll(m.Directory(), "/", `\`))
 		}
 
-		_, err := d.rpc.AddURI([]string{m.URL()}, &arigo.Options{
+		_, err := d.rpc.AddURI([]string{m.GetFull()}, &arigo.Options{
 			Out: m.Filename(),
 			Dir: dir,
 		})

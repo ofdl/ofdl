@@ -25,8 +25,8 @@ type MessageMedia struct {
 	MessageID int `json:"message_id,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
-	// Src holds the value of the "src" field.
-	Src string `json:"src,omitempty"`
+	// Full holds the value of the "full" field.
+	Full string `json:"full,omitempty"`
 	// DownloadedAt holds the value of the "downloaded_at" field.
 	DownloadedAt time.Time `json:"downloaded_at,omitempty"`
 	// StashID holds the value of the "stash_id" field.
@@ -72,7 +72,7 @@ func (*MessageMedia) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case messagemedia.FieldID, messagemedia.FieldMessageID:
 			values[i] = new(sql.NullInt64)
-		case messagemedia.FieldType, messagemedia.FieldSrc, messagemedia.FieldStashID:
+		case messagemedia.FieldType, messagemedia.FieldFull, messagemedia.FieldStashID:
 			values[i] = new(sql.NullString)
 		case messagemedia.FieldDownloadedAt, messagemedia.FieldOrganizedAt, messagemedia.FieldCreatedAt, messagemedia.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -109,11 +109,11 @@ func (mm *MessageMedia) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				mm.Type = value.String
 			}
-		case messagemedia.FieldSrc:
+		case messagemedia.FieldFull:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field src", values[i])
+				return fmt.Errorf("unexpected type %T for field full", values[i])
 			} else if value.Valid {
-				mm.Src = value.String
+				mm.Full = value.String
 			}
 		case messagemedia.FieldDownloadedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -192,8 +192,8 @@ func (mm *MessageMedia) String() string {
 	builder.WriteString("type=")
 	builder.WriteString(mm.Type)
 	builder.WriteString(", ")
-	builder.WriteString("src=")
-	builder.WriteString(mm.Src)
+	builder.WriteString("full=")
+	builder.WriteString(mm.Full)
 	builder.WriteString(", ")
 	builder.WriteString("downloaded_at=")
 	builder.WriteString(mm.DownloadedAt.Format(time.ANSIC))
@@ -213,22 +213,70 @@ func (mm *MessageMedia) String() string {
 	return builder.String()
 }
 
-// URL returns the URL of the downloadable media
-func (m *MessageMedia) URL() string {
-	return m.Src
-}
-
+// Directory returns the directory in which the MessageMedia is stored
 func (m MessageMedia) Directory() string {
 	return fmt.Sprintf("/%s/messages/%d", m.Edges.Message.Edges.Subscription.Username, m.Edges.Message.ID)
 }
 
+// Filename returns the filename of the MessageMedia
 func (mm *MessageMedia) Filename() string {
-	u, _ := url.Parse(mm.URL())
+	u, _ := url.Parse(mm.GetFull())
 	return path.Base(u.Path)
 }
 
+// MarkDownloaded marks the media as downloaded
 func (mm *MessageMedia) MarkDownloaded(ctx context.Context) error {
 	return mm.Update().SetDownloadedAt(time.Now()).Exec(ctx)
+}
+
+// GetMessageID returns the message_id column
+func (mm *MessageMedia) GetMessageID() int {
+	return mm.MessageID
+}
+
+// GetType returns the type column
+func (mm *MessageMedia) GetType() string {
+	return mm.Type
+}
+
+// GetFull returns the full column
+func (mm *MessageMedia) GetFull() string {
+	return mm.Full
+}
+
+// GetDownloadedAt returns the downloaded_at column
+func (mm *MessageMedia) GetDownloadedAt() time.Time {
+	return mm.DownloadedAt
+}
+
+// GetStashID returns the stash_id column
+func (mm *MessageMedia) GetStashID() string {
+	return mm.StashID
+}
+
+// GetOrganizedAt returns the organized_at column
+func (mm *MessageMedia) GetOrganizedAt() time.Time {
+	return mm.OrganizedAt
+}
+
+// GetCreatedAt returns the created_at column
+func (mm *MessageMedia) GetCreatedAt() time.Time {
+	return mm.CreatedAt
+}
+
+// GetUpdatedAt returns the updated_at column
+func (mm *MessageMedia) GetUpdatedAt() time.Time {
+	return mm.UpdatedAt
+}
+
+// Organize marks the MessageMedia as organized and sets the stash ID.
+func (mm *MessageMedia) Organize(ctx context.Context, id string) error {
+	return mm.Update().SetOrganizedAt(time.Now()).SetStashID(id).Exec(ctx)
+}
+
+// MarkOrganized marks the MessageMedia as organized.
+func (mm *MessageMedia) MarkOrganized(ctx context.Context) error {
+	return mm.Update().SetOrganizedAt(time.Now()).Exec(ctx)
 }
 
 // MessageMediaSlice is a parsable slice of MessageMedia.

@@ -20,7 +20,6 @@ func (Media) Fields() []ent.Field {
 		field.Int("post_id"),
 		field.String("type"),
 		field.String("full").Optional(),
-		field.String("posted_at"),
 
 		field.Time("downloaded_at").Optional(),
 		field.String("stash_id").Optional(),

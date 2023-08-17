@@ -193,5 +193,30 @@ func (po *Post) String() string {
 	return builder.String()
 }
 
+// GetSubscriptionID returns the subscription_id column
+func (po *Post) GetSubscriptionID() int {
+	return po.SubscriptionID
+}
+
+// GetText returns the text column
+func (po *Post) GetText() string {
+	return po.Text
+}
+
+// GetPostedAt returns the posted_at column
+func (po *Post) GetPostedAt() string {
+	return po.PostedAt
+}
+
+// GetCreatedAt returns the created_at column
+func (po *Post) GetCreatedAt() time.Time {
+	return po.CreatedAt
+}
+
+// GetUpdatedAt returns the updated_at column
+func (po *Post) GetUpdatedAt() time.Time {
+	return po.UpdatedAt
+}
+
 // Posts is a parsable slice of Post.
 type Posts []*Post

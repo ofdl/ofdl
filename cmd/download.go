@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/ofdl/ofdl/ent"
 	"github.com/ofdl/ofdl/ent/media"
 	"github.com/ofdl/ofdl/ent/messagemedia"
 	"github.com/ofdl/ofdl/ofdl/downloader"
@@ -44,7 +45,13 @@ var downloadPostsCmd = &cobra.Command{
 	Short:   "Download media posts",
 	Aliases: []string{"media", "mp"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		missing, err := OFDL.Ent.Media.Query().Where(media.DownloadedAtIsNil()).Limit(viper.GetInt("downloads.batch-size")).All(cmd.Context())
+		missing, err := OFDL.Ent.Media.Query().
+			Where(media.DownloadedAtIsNil()).
+			WithPost(func(q *ent.PostQuery) {
+				q.WithSubscription()
+			}).
+			Limit(viper.GetInt("downloads.batch-size")).
+			All(cmd.Context())
 		if err != nil {
 			return err
 		}
@@ -67,7 +74,13 @@ var downloadMessagesCmd = &cobra.Command{
 	Short:   "Download messages",
 	Aliases: []string{"msg"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		missing, err := OFDL.Ent.MessageMedia.Query().Where(messagemedia.DownloadedAtIsNil()).Limit(viper.GetInt("downloads.batch-size")).All(cmd.Context())
+		missing, err := OFDL.Ent.MessageMedia.Query().
+			Where(messagemedia.DownloadedAtIsNil()).
+			WithMessage(func(q *ent.MessageQuery) {
+				q.WithSubscription()
+			}).
+			Limit(viper.GetInt("downloads.batch-size")).
+			All(cmd.Context())
 		if err != nil {
 			return err
 		}

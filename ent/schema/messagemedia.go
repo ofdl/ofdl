@@ -19,10 +19,10 @@ func (MessageMedia) Fields() []ent.Field {
 		field.Int("id").Positive().Unique(),
 		field.Int("message_id"),
 		field.String("type"),
-		field.String("src").Optional(),
+		field.String("full").Optional().StorageKey("src"),
 
 		field.Time("downloaded_at").Optional(),
-		field.String("stash_id"),
+		field.String("stash_id").Optional(),
 		field.Time("organized_at").Optional(),
 
 		field.Time("created_at").Default(time.Now),

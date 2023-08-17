@@ -3,6 +3,9 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ofdl/ofdl/ent/media"
+	"github.com/ofdl/ofdl/ent/messagemedia"
+	"github.com/ofdl/ofdl/ent/subscription"
 	"github.com/spf13/cobra"
 )
 
@@ -11,58 +14,57 @@ var statsCmd = &cobra.Command{
 	Short:             "Print database statistics",
 	PersistentPreRunE: UseOFDL,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		s := OFDL.Query.Subscription
-		subCount, err := s.Count()
+		ctx := cmd.Context()
+
+		subCount, err := OFDL.Ent.Subscription.Query().Count(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("Subscription Count: %d\n", subCount)
 
-		uosCount, err := s.Where(s.OrganizedAt.IsNull()).Count()
+		uosCount, err := OFDL.Ent.Subscription.Query().Where(subscription.OrganizedAtIsNil()).Count(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("Subscription Count (Unorganized): %d\n", uosCount)
 
-		mpCount, err := OFDL.Query.Post.Count()
+		mpCount, err := OFDL.Ent.Post.Query().Count(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("Post Count: %d\n", mpCount)
 
-		m := OFDL.Query.Media
-		mCount, err := m.Count()
+		mCount, err := OFDL.Ent.Media.Query().Count(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("Media Count: %d\n", mCount)
 
-		udmCount, err := m.Where(m.DownloadedAt.IsNull()).Count()
+		udmCount, err := OFDL.Ent.Media.Query().Where(media.DownloadedAtIsNil()).Count(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("Media Count (Undownloaded): %d\n", udmCount)
 
-		uomCount, err := m.Where(m.OrganizedAt.IsNull()).Count()
+		uomCount, err := OFDL.Ent.Media.Query().Where(media.OrganizedAtIsNil()).Count(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("Media Count (Unorganized): %d\n", uomCount)
 
-		mm := OFDL.Query.MessageMedia
-		mmCount, err := mm.Count()
+		mmCount, err := OFDL.Ent.MessageMedia.Query().Count(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("Message Media Count: %d\n", mmCount)
 
-		udmmCount, err := mm.Where(mm.DownloadedAt.IsNull()).Count()
+		udmmCount, err := OFDL.Ent.MessageMedia.Query().Where(messagemedia.DownloadedAtIsNil()).Count(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Printf("Message Media Count (Undownloaded): %d\n", udmmCount)
 
-		uommCount, err := mm.Where(mm.OrganizedAt.IsNull()).Count()
+		uommCount, err := OFDL.Ent.MessageMedia.Query().Where(messagemedia.OrganizedAtIsNil()).Count(ctx)
 		if err != nil {
 			return err
 		}

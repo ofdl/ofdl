@@ -13,7 +13,6 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "type", Type: field.TypeString},
 		{Name: "full", Type: field.TypeString, Nullable: true},
-		{Name: "posted_at", Type: field.TypeString},
 		{Name: "downloaded_at", Type: field.TypeTime, Nullable: true},
 		{Name: "stash_id", Type: field.TypeString, Nullable: true},
 		{Name: "organized_at", Type: field.TypeTime, Nullable: true},
@@ -29,7 +28,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "media_posts_medias",
-				Columns:    []*schema.Column{MediaColumns[9]},
+				Columns:    []*schema.Column{MediaColumns[8]},
 				RefColumns: []*schema.Column{PostsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -62,7 +61,7 @@ var (
 		{Name: "type", Type: field.TypeString},
 		{Name: "src", Type: field.TypeString, Nullable: true},
 		{Name: "downloaded_at", Type: field.TypeTime, Nullable: true},
-		{Name: "stash_id", Type: field.TypeString},
+		{Name: "stash_id", Type: field.TypeString, Nullable: true},
 		{Name: "organized_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},

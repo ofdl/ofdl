@@ -49,12 +49,6 @@ func (mc *MediaCreate) SetNillableFull(s *string) *MediaCreate {
 	return mc
 }
 
-// SetPostedAt sets the "posted_at" field.
-func (mc *MediaCreate) SetPostedAt(s string) *MediaCreate {
-	mc.mutation.SetPostedAt(s)
-	return mc
-}
-
 // SetDownloadedAt sets the "downloaded_at" field.
 func (mc *MediaCreate) SetDownloadedAt(t time.Time) *MediaCreate {
 	mc.mutation.SetDownloadedAt(t)
@@ -189,9 +183,6 @@ func (mc *MediaCreate) check() error {
 	if _, ok := mc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Media.type"`)}
 	}
-	if _, ok := mc.mutation.PostedAt(); !ok {
-		return &ValidationError{Name: "posted_at", err: errors.New(`ent: missing required field "Media.posted_at"`)}
-	}
 	if _, ok := mc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Media.created_at"`)}
 	}
@@ -246,10 +237,6 @@ func (mc *MediaCreate) createSpec() (*Media, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.Full(); ok {
 		_spec.SetField(media.FieldFull, field.TypeString, value)
 		_node.Full = value
-	}
-	if value, ok := mc.mutation.PostedAt(); ok {
-		_spec.SetField(media.FieldPostedAt, field.TypeString, value)
-		_node.PostedAt = value
 	}
 	if value, ok := mc.mutation.DownloadedAt(); ok {
 		_spec.SetField(media.FieldDownloadedAt, field.TypeTime, value)
@@ -379,18 +366,6 @@ func (u *MediaUpsert) UpdateFull() *MediaUpsert {
 // ClearFull clears the value of the "full" field.
 func (u *MediaUpsert) ClearFull() *MediaUpsert {
 	u.SetNull(media.FieldFull)
-	return u
-}
-
-// SetPostedAt sets the "posted_at" field.
-func (u *MediaUpsert) SetPostedAt(v string) *MediaUpsert {
-	u.Set(media.FieldPostedAt, v)
-	return u
-}
-
-// UpdatePostedAt sets the "posted_at" field to the value that was provided on create.
-func (u *MediaUpsert) UpdatePostedAt() *MediaUpsert {
-	u.SetExcluded(media.FieldPostedAt)
 	return u
 }
 
@@ -566,20 +541,6 @@ func (u *MediaUpsertOne) UpdateFull() *MediaUpsertOne {
 func (u *MediaUpsertOne) ClearFull() *MediaUpsertOne {
 	return u.Update(func(s *MediaUpsert) {
 		s.ClearFull()
-	})
-}
-
-// SetPostedAt sets the "posted_at" field.
-func (u *MediaUpsertOne) SetPostedAt(v string) *MediaUpsertOne {
-	return u.Update(func(s *MediaUpsert) {
-		s.SetPostedAt(v)
-	})
-}
-
-// UpdatePostedAt sets the "posted_at" field to the value that was provided on create.
-func (u *MediaUpsertOne) UpdatePostedAt() *MediaUpsertOne {
-	return u.Update(func(s *MediaUpsert) {
-		s.UpdatePostedAt()
 	})
 }
 
@@ -930,20 +891,6 @@ func (u *MediaUpsertBulk) UpdateFull() *MediaUpsertBulk {
 func (u *MediaUpsertBulk) ClearFull() *MediaUpsertBulk {
 	return u.Update(func(s *MediaUpsert) {
 		s.ClearFull()
-	})
-}
-
-// SetPostedAt sets the "posted_at" field.
-func (u *MediaUpsertBulk) SetPostedAt(v string) *MediaUpsertBulk {
-	return u.Update(func(s *MediaUpsert) {
-		s.SetPostedAt(v)
-	})
-}
-
-// UpdatePostedAt sets the "posted_at" field to the value that was provided on create.
-func (u *MediaUpsertBulk) UpdatePostedAt() *MediaUpsertBulk {
-	return u.Update(func(s *MediaUpsert) {
-		s.UpdatePostedAt()
 	})
 }
 

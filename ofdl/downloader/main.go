@@ -10,7 +10,7 @@ import (
 type Downloadable interface {
 	Directory() string
 	Filename() string
-	URL() string
+	GetFull() string
 	MarkDownloaded(context.Context) error
 }
 

@@ -68,7 +68,7 @@ database.
 					SetHeader(v.Header).
 					SetName(v.Name).
 					SetUsername(v.Username).
-					OnConflict().UpdateNewValues().
+					OnConflict().UpdateAvatar().UpdateHeader().UpdateName().
 					Exec(cmd.Context())
 				if err != nil {
 					return err
@@ -230,7 +230,7 @@ database.
 							SetType(v.Type)
 
 						if v.Src != nil {
-							m.SetSrc(*v.Src)
+							m.SetFull(*v.Src)
 						}
 
 						mc = append(mc, m)

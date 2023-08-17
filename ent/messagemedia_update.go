@@ -41,23 +41,23 @@ func (mmu *MessageMediaUpdate) SetType(s string) *MessageMediaUpdate {
 	return mmu
 }
 
-// SetSrc sets the "src" field.
-func (mmu *MessageMediaUpdate) SetSrc(s string) *MessageMediaUpdate {
-	mmu.mutation.SetSrc(s)
+// SetFull sets the "full" field.
+func (mmu *MessageMediaUpdate) SetFull(s string) *MessageMediaUpdate {
+	mmu.mutation.SetFull(s)
 	return mmu
 }
 
-// SetNillableSrc sets the "src" field if the given value is not nil.
-func (mmu *MessageMediaUpdate) SetNillableSrc(s *string) *MessageMediaUpdate {
+// SetNillableFull sets the "full" field if the given value is not nil.
+func (mmu *MessageMediaUpdate) SetNillableFull(s *string) *MessageMediaUpdate {
 	if s != nil {
-		mmu.SetSrc(*s)
+		mmu.SetFull(*s)
 	}
 	return mmu
 }
 
-// ClearSrc clears the value of the "src" field.
-func (mmu *MessageMediaUpdate) ClearSrc() *MessageMediaUpdate {
-	mmu.mutation.ClearSrc()
+// ClearFull clears the value of the "full" field.
+func (mmu *MessageMediaUpdate) ClearFull() *MessageMediaUpdate {
+	mmu.mutation.ClearFull()
 	return mmu
 }
 
@@ -84,6 +84,20 @@ func (mmu *MessageMediaUpdate) ClearDownloadedAt() *MessageMediaUpdate {
 // SetStashID sets the "stash_id" field.
 func (mmu *MessageMediaUpdate) SetStashID(s string) *MessageMediaUpdate {
 	mmu.mutation.SetStashID(s)
+	return mmu
+}
+
+// SetNillableStashID sets the "stash_id" field if the given value is not nil.
+func (mmu *MessageMediaUpdate) SetNillableStashID(s *string) *MessageMediaUpdate {
+	if s != nil {
+		mmu.SetStashID(*s)
+	}
+	return mmu
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (mmu *MessageMediaUpdate) ClearStashID() *MessageMediaUpdate {
+	mmu.mutation.ClearStashID()
 	return mmu
 }
 
@@ -202,11 +216,11 @@ func (mmu *MessageMediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := mmu.mutation.GetType(); ok {
 		_spec.SetField(messagemedia.FieldType, field.TypeString, value)
 	}
-	if value, ok := mmu.mutation.Src(); ok {
-		_spec.SetField(messagemedia.FieldSrc, field.TypeString, value)
+	if value, ok := mmu.mutation.Full(); ok {
+		_spec.SetField(messagemedia.FieldFull, field.TypeString, value)
 	}
-	if mmu.mutation.SrcCleared() {
-		_spec.ClearField(messagemedia.FieldSrc, field.TypeString)
+	if mmu.mutation.FullCleared() {
+		_spec.ClearField(messagemedia.FieldFull, field.TypeString)
 	}
 	if value, ok := mmu.mutation.DownloadedAt(); ok {
 		_spec.SetField(messagemedia.FieldDownloadedAt, field.TypeTime, value)
@@ -216,6 +230,9 @@ func (mmu *MessageMediaUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := mmu.mutation.StashID(); ok {
 		_spec.SetField(messagemedia.FieldStashID, field.TypeString, value)
+	}
+	if mmu.mutation.StashIDCleared() {
+		_spec.ClearField(messagemedia.FieldStashID, field.TypeString)
 	}
 	if value, ok := mmu.mutation.OrganizedAt(); ok {
 		_spec.SetField(messagemedia.FieldOrganizedAt, field.TypeTime, value)
@@ -290,23 +307,23 @@ func (mmuo *MessageMediaUpdateOne) SetType(s string) *MessageMediaUpdateOne {
 	return mmuo
 }
 
-// SetSrc sets the "src" field.
-func (mmuo *MessageMediaUpdateOne) SetSrc(s string) *MessageMediaUpdateOne {
-	mmuo.mutation.SetSrc(s)
+// SetFull sets the "full" field.
+func (mmuo *MessageMediaUpdateOne) SetFull(s string) *MessageMediaUpdateOne {
+	mmuo.mutation.SetFull(s)
 	return mmuo
 }
 
-// SetNillableSrc sets the "src" field if the given value is not nil.
-func (mmuo *MessageMediaUpdateOne) SetNillableSrc(s *string) *MessageMediaUpdateOne {
+// SetNillableFull sets the "full" field if the given value is not nil.
+func (mmuo *MessageMediaUpdateOne) SetNillableFull(s *string) *MessageMediaUpdateOne {
 	if s != nil {
-		mmuo.SetSrc(*s)
+		mmuo.SetFull(*s)
 	}
 	return mmuo
 }
 
-// ClearSrc clears the value of the "src" field.
-func (mmuo *MessageMediaUpdateOne) ClearSrc() *MessageMediaUpdateOne {
-	mmuo.mutation.ClearSrc()
+// ClearFull clears the value of the "full" field.
+func (mmuo *MessageMediaUpdateOne) ClearFull() *MessageMediaUpdateOne {
+	mmuo.mutation.ClearFull()
 	return mmuo
 }
 
@@ -333,6 +350,20 @@ func (mmuo *MessageMediaUpdateOne) ClearDownloadedAt() *MessageMediaUpdateOne {
 // SetStashID sets the "stash_id" field.
 func (mmuo *MessageMediaUpdateOne) SetStashID(s string) *MessageMediaUpdateOne {
 	mmuo.mutation.SetStashID(s)
+	return mmuo
+}
+
+// SetNillableStashID sets the "stash_id" field if the given value is not nil.
+func (mmuo *MessageMediaUpdateOne) SetNillableStashID(s *string) *MessageMediaUpdateOne {
+	if s != nil {
+		mmuo.SetStashID(*s)
+	}
+	return mmuo
+}
+
+// ClearStashID clears the value of the "stash_id" field.
+func (mmuo *MessageMediaUpdateOne) ClearStashID() *MessageMediaUpdateOne {
+	mmuo.mutation.ClearStashID()
 	return mmuo
 }
 
@@ -481,11 +512,11 @@ func (mmuo *MessageMediaUpdateOne) sqlSave(ctx context.Context) (_node *MessageM
 	if value, ok := mmuo.mutation.GetType(); ok {
 		_spec.SetField(messagemedia.FieldType, field.TypeString, value)
 	}
-	if value, ok := mmuo.mutation.Src(); ok {
-		_spec.SetField(messagemedia.FieldSrc, field.TypeString, value)
+	if value, ok := mmuo.mutation.Full(); ok {
+		_spec.SetField(messagemedia.FieldFull, field.TypeString, value)
 	}
-	if mmuo.mutation.SrcCleared() {
-		_spec.ClearField(messagemedia.FieldSrc, field.TypeString)
+	if mmuo.mutation.FullCleared() {
+		_spec.ClearField(messagemedia.FieldFull, field.TypeString)
 	}
 	if value, ok := mmuo.mutation.DownloadedAt(); ok {
 		_spec.SetField(messagemedia.FieldDownloadedAt, field.TypeTime, value)
@@ -495,6 +526,9 @@ func (mmuo *MessageMediaUpdateOne) sqlSave(ctx context.Context) (_node *MessageM
 	}
 	if value, ok := mmuo.mutation.StashID(); ok {
 		_spec.SetField(messagemedia.FieldStashID, field.TypeString, value)
+	}
+	if mmuo.mutation.StashIDCleared() {
+		_spec.ClearField(messagemedia.FieldStashID, field.TypeString)
 	}
 	if value, ok := mmuo.mutation.OrganizedAt(); ok {
 		_spec.SetField(messagemedia.FieldOrganizedAt, field.TypeTime, value)
