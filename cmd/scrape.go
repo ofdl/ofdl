@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ofdl/ofdl/ent"
 	"github.com/ofdl/ofdl/ent/subscription"
+	"github.com/ofdl/ofdl/ofdl/onlyfans"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +20,6 @@ This command will scrape the OnlyFans API for subscriptions, media posts, and
 messages. See ofdl scrape subs --help, ofdl scrape media-posts --help, and
 ofdl scrape msg --help for more information.
 `,
-	PersistentPreRunE: UseOFDL,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := scrapeSubsCmd.RunE(cmd, args); err != nil {
 			return err
@@ -45,8 +46,8 @@ This command will scrape the OnlyFans API for subscriptions and save them to the
 database.
 `,
 	Aliases: []string{"subs", "s"},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		f, err := OFDL.OnlyFans.Following()
+	RunE: Inject(func(ctx context.Context, OnlyFans *onlyfans.OnlyFans, Ent *ent.Client) error {
+		f, err := OnlyFans.Following()
 		if err != nil {
 			return err
 		}
@@ -56,20 +57,20 @@ database.
 
 		l := 50
 		for o := 0; o < f.UsersCount; o += l {
-			subs, err := OFDL.OnlyFans.GetSubscriptions(l, o)
+			subs, err := OnlyFans.GetSubscriptions(l, o)
 			if err != nil {
 				return err
 			}
 
 			for _, v := range subs {
-				err := OFDL.Ent.Subscription.Create().
+				err := Ent.Subscription.Create().
 					SetID(v.ID).
 					SetAvatar(v.Avatar).
 					SetHeader(v.Header).
 					SetName(v.Name).
 					SetUsername(v.Username).
 					OnConflict().UpdateAvatar().UpdateHeader().UpdateName().
-					Exec(cmd.Context())
+					Exec(ctx)
 				if err != nil {
 					return err
 				}
@@ -79,7 +80,7 @@ database.
 		}
 
 		return nil
-	},
+	}),
 }
 
 var scrapeMediaPostsCmd = &cobra.Command{
@@ -92,8 +93,8 @@ database. This command will also update the head marker for each subscription
 that is scraped. This allows for incremental scraping of media posts.
 `,
 	Aliases: []string{"media", "mp"},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		subs, err := OFDL.Ent.Subscription.Query().Where(subscription.EnabledEQ(true)).All(cmd.Context())
+	RunE: Inject(func(ctx context.Context, OnlyFans *onlyfans.OnlyFans, Ent *ent.Client) error {
+		subs, err := Ent.Subscription.Query().Where(subscription.EnabledEQ(true)).All(ctx)
 		if err != nil {
 			return err
 		}
@@ -109,7 +110,7 @@ that is scraped. This allows for incremental scraping of media posts.
 			// Sync Media Posts
 			for hasMore {
 				// Get a page
-				page, err := OFDL.OnlyFans.GetMediaPosts(int(sub.ID), tailMarker)
+				page, err := OnlyFans.GetMediaPosts(int(sub.ID), tailMarker)
 				if err != nil {
 					return err
 				}
@@ -126,20 +127,20 @@ that is scraped. This allows for incremental scraping of media posts.
 
 				// Save Media Posts
 				for _, m := range page.List {
-					postId, err := OFDL.Ent.Post.Create().
+					postId, err := Ent.Post.Create().
 						SetID(m.ID).
 						SetSubscriptionID(sub.ID).
 						SetText(m.Text).
 						SetPostedAt(m.PostedAt).
 						OnConflict().UpdateNewValues().
-						ID(cmd.Context())
+						ID(ctx)
 					if err != nil {
 						return err
 					}
 
 					mc := []*ent.MediaCreate{}
 					for _, v := range m.Media {
-						mc = append(mc, OFDL.Ent.Media.Create().
+						mc = append(mc, Ent.Media.Create().
 							SetID(v.ID).
 							SetPostID(postId).
 							SetType(v.Type).
@@ -147,7 +148,7 @@ that is scraped. This allows for incremental scraping of media posts.
 						)
 					}
 
-					if err := OFDL.Ent.Media.CreateBulk(mc...).OnConflict().UpdateNewValues().Exec(cmd.Context()); err != nil {
+					if err := Ent.Media.CreateBulk(mc...).OnConflict().UpdateNewValues().Exec(ctx); err != nil {
 						return err
 					}
 					bar.Add(len(m.Media))
@@ -162,7 +163,7 @@ that is scraped. This allows for incremental scraping of media posts.
 			}
 
 			if headMarker != nil {
-				if err := sub.Update().SetHeadMarker(*headMarker).Exec(cmd.Context()); err != nil {
+				if err := sub.Update().SetHeadMarker(*headMarker).Exec(ctx); err != nil {
 					return err
 				}
 			}
@@ -171,7 +172,7 @@ that is scraped. This allows for incremental scraping of media posts.
 		}
 
 		return nil
-	},
+	}),
 }
 
 var scrapeMessagesCmd = &cobra.Command{
@@ -183,8 +184,9 @@ This command will scrape the OnlyFans API for messages and save them to the
 database.
 `,
 	Aliases: []string{"msg"},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		subs, err := OFDL.Ent.Subscription.Query().Where(subscription.EnabledEQ(true)).All(cmd.Context())
+	// RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: Inject(func(ctx context.Context, OnlyFans *onlyfans.OnlyFans, Ent *ent.Client) error {
+		subs, err := Ent.Subscription.Query().Where(subscription.EnabledEQ(true)).All(ctx)
 		if err != nil {
 			return err
 		}
@@ -197,7 +199,7 @@ database.
 
 			for hasMore {
 				// Get a page
-				page, err := OFDL.OnlyFans.GetMessages(int(sub.ID), nextId)
+				page, err := OnlyFans.GetMessages(int(sub.ID), nextId)
 				if err != nil {
 					return err
 				}
@@ -207,13 +209,13 @@ database.
 
 				// Save Messages
 				for _, m := range page.List {
-					messageId, err := OFDL.Ent.Message.Create().
+					messageId, err := Ent.Message.Create().
 						SetID(m.ID).
 						SetSubscriptionID(sub.ID).
 						SetText(m.Text).
 						SetPostedAt(m.CreatedAt).
 						OnConflict().UpdateNewValues().
-						ID(cmd.Context())
+						ID(ctx)
 					if err != nil {
 						return err
 					}
@@ -224,7 +226,7 @@ database.
 							continue
 						}
 
-						m := OFDL.Ent.MessageMedia.Create().
+						m := Ent.MessageMedia.Create().
 							SetID(v.ID).
 							SetMessageID(messageId).
 							SetType(v.Type)
@@ -236,7 +238,7 @@ database.
 						mc = append(mc, m)
 					}
 
-					if err := OFDL.Ent.MessageMedia.CreateBulk(mc...).OnConflict().UpdateNewValues().Exec(cmd.Context()); err != nil {
+					if err := Ent.MessageMedia.CreateBulk(mc...).OnConflict().UpdateNewValues().Exec(ctx); err != nil {
 						return err
 					}
 
@@ -252,7 +254,7 @@ database.
 		}
 
 		return nil
-	},
+	}),
 }
 
 func init() {

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/ofdl/ofdl/ent"
 	"github.com/ofdl/ofdl/ent/media"
 	"github.com/ofdl/ofdl/ent/messagemedia"
@@ -26,7 +28,6 @@ has not been downloaded yet.
 Adjust the "downloads.batch-size" flag to control how many media are downloaded
 at once.
 `,
-	PersistentPreRunE: UseOFDL,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := downloadPostsCmd.RunE(cmd, args); err != nil {
 			return err
@@ -44,20 +45,20 @@ var downloadPostsCmd = &cobra.Command{
 	Use:     "media-posts",
 	Short:   "Download media posts",
 	Aliases: []string{"media", "mp"},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		missing, err := OFDL.Ent.Media.Query().
+	RunE: Inject(func(ctx context.Context, Ent *ent.Client, Downloader downloader.Downloader) error {
+		missing, err := Ent.Media.Query().
 			Where(media.DownloadedAtIsNil()).
 			WithPost(func(q *ent.PostQuery) {
 				q.WithSubscription()
 			}).
 			Limit(viper.GetInt("downloads.batch-size")).
-			All(cmd.Context())
+			All(ctx)
 		if err != nil {
 			return err
 		}
 
 		bar := progressbar.Default(int64(len(missing)), "Downloading media")
-		progress := OFDL.Downloader.DownloadMany(downloader.ToDownloadableSlice(missing))
+		progress := Downloader.DownloadMany(downloader.ToDownloadableSlice(missing))
 		for err := range progress {
 			if err != nil {
 				return err
@@ -66,27 +67,27 @@ var downloadPostsCmd = &cobra.Command{
 		}
 
 		return nil
-	},
+	}),
 }
 
 var downloadMessagesCmd = &cobra.Command{
 	Use:     "messages",
 	Short:   "Download messages",
 	Aliases: []string{"msg"},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		missing, err := OFDL.Ent.MessageMedia.Query().
+	RunE: Inject(func(ctx context.Context, Ent *ent.Client, Downloader downloader.Downloader) error {
+		missing, err := Ent.MessageMedia.Query().
 			Where(messagemedia.DownloadedAtIsNil()).
 			WithMessage(func(q *ent.MessageQuery) {
 				q.WithSubscription()
 			}).
 			Limit(viper.GetInt("downloads.batch-size")).
-			All(cmd.Context())
+			All(ctx)
 		if err != nil {
 			return err
 		}
 
 		bar := progressbar.Default(int64(len(missing)), "Downloading message media")
-		progress := OFDL.Downloader.DownloadMany(downloader.ToDownloadableSlice(missing))
+		progress := Downloader.DownloadMany(downloader.ToDownloadableSlice(missing))
 		for err := range progress {
 			if err != nil {
 				return err
@@ -95,7 +96,7 @@ var downloadMessagesCmd = &cobra.Command{
 		}
 
 		return nil
-	},
+	}),
 }
 
 func init() {

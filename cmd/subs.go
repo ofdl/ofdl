@@ -15,17 +15,11 @@ var subsCmd = &cobra.Command{
 Subscriptions expired? Disenchanted with a creator? Manage which subscriptions
 you're tracking here.
 	`,
-	PersistentPreRunE: UseOFDL,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		var g *gui.SubsGUI
-		if err := App.Resolve(&g); err != nil {
-			return err
-		}
-
+	RunE: Inject(func(g *gui.SubsGUI) error {
 		p := tea.NewProgram(g)
 		_, err := p.Run()
 		return err
-	},
+	}),
 }
 
 func init() {

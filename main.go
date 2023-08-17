@@ -9,20 +9,18 @@ import (
 	"github.com/ofdl/ofdl/cmd"
 	"github.com/ofdl/ofdl/cmd/gui"
 	"github.com/ofdl/ofdl/ent"
-	"github.com/ofdl/ofdl/ofdl"
 	"github.com/ofdl/ofdl/ofdl/downloader"
 	"github.com/ofdl/ofdl/ofdl/onlyfans"
 )
 
 func main() {
+	// di.SetTracer(di.StdTracer{})
 	app, err := di.New(
+		di.Provide(ent.NewEntClient),
 		di.Provide(onlyfans.NewOnlyFans),
 		di.Provide(downloader.NewDownloader),
-		di.Provide(ofdl.NewStash),
-		di.Provide(ofdl.NewOFDL),
 
 		di.Provide(gui.NewSubsGui),
-		di.Provide(ent.NewEntClient),
 	)
 	if err != nil {
 		fmt.Println(err)
