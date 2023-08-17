@@ -11,6 +11,7 @@ import (
 	"github.com/ofdl/ofdl/ent"
 	"github.com/ofdl/ofdl/ofdl/downloader"
 	"github.com/ofdl/ofdl/ofdl/onlyfans"
+	"github.com/ofdl/ofdl/ofdl/organizer"
 )
 
 func main() {
@@ -19,6 +20,7 @@ func main() {
 		di.Provide(ent.NewEntClient),
 		di.Provide(onlyfans.NewOnlyFans),
 		di.Provide(downloader.NewDownloader),
+		di.Provide(organizer.NewOrganizer),
 
 		di.Provide(gui.NewSubsGui),
 	)
