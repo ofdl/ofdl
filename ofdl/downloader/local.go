@@ -9,11 +9,13 @@ import (
 )
 
 type LocalDownloader struct {
+	ctx  context.Context
 	root string
 }
 
-func NewLocalDownloader(root string) (Downloader, error) {
+func NewLocalDownloader(ctx context.Context, root string) (Downloader, error) {
 	return &LocalDownloader{
+		ctx:  ctx,
 		root: root,
 	}, nil
 }
@@ -58,11 +60,16 @@ func (d *LocalDownloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 		defer close(progress)
 
 		if m.GetFull() == "" {
-			done <- m.MarkDownloaded(context.TODO())
+			done <- m.MarkDownloaded(d.ctx)
 			return
 		}
 
-		resp, err := http.Get(m.GetFull())
+		req, err := http.NewRequestWithContext(d.ctx, http.MethodGet, m.GetFull(), nil)
+		if err != nil {
+			done <- err
+			return
+		}
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			done <- err
 			return
@@ -89,7 +96,7 @@ func (d *LocalDownloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 			return
 		}
 
-		done <- m.MarkDownloaded(context.TODO())
+		done <- m.MarkDownloaded(d.ctx)
 	}()
 
 	return progress, done

@@ -7,6 +7,7 @@ import (
 	"github.com/ofdl/ofdl/ent/media"
 	"github.com/ofdl/ofdl/ent/messagemedia"
 	"github.com/ofdl/ofdl/ent/subscription"
+	"github.com/ofdl/ofdl/ofdl"
 	"github.com/ofdl/ofdl/ofdl/organizer"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
@@ -44,7 +45,7 @@ var stashSubsCmd = &cobra.Command{
 This command will organize subscriptions into performers. It assigns their name,
 URL, and photo.
 `,
-	RunE: Inject(func(ctx context.Context, Ent *ent.Client, Organizer organizer.Organizer) error {
+	RunE: ofdl.RunE(func(ctx context.Context, Ent *ent.Client, Organizer organizer.Organizer) error {
 		ms, err := Ent.Subscription.Query().Where(subscription.OrganizedAtIsNil()).Limit(100).All(ctx)
 		if err != nil {
 			return err
@@ -74,7 +75,7 @@ subscription must have a Stash ID (already be organized) for this to work. It
 assigns the Performer, Studio, Date, and Text on both Images and Scenes. Stash
 will probably organize Images into Galleries per-post.
 `,
-	RunE: Inject(func(ctx context.Context, Ent *ent.Client, Organizer organizer.Organizer) error {
+	RunE: ofdl.RunE(func(ctx context.Context, Ent *ent.Client, Organizer organizer.Organizer) error {
 		ms, err := Ent.Media.Query().
 			Where(media.OrganizedAtIsNil()).
 			WithPost(func(q *ent.PostQuery) {

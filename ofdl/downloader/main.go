@@ -19,12 +19,12 @@ type Downloader interface {
 	DownloadMany([]Downloadable) <-chan error
 }
 
-func NewDownloader() (dl Downloader, err error) {
+func NewDownloader(ctx context.Context) (dl Downloader, err error) {
 	switch viper.GetString("downloads.downloader") {
 	case "local":
-		dl, err = NewLocalDownloader(viper.GetString("downloads.local.root"))
+		dl, err = NewLocalDownloader(ctx, viper.GetString("downloads.local.root"))
 	case "aria2":
-		dl, err = NewAria2Downloader(
+		dl, err = NewAria2Downloader(ctx,
 			viper.GetString("downloads.aria2.address"),
 			viper.GetString("downloads.aria2.secret"),
 			viper.GetString("downloads.aria2.root"),

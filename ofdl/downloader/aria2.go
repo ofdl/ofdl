@@ -11,17 +11,19 @@ import (
 )
 
 type Aria2Downloader struct {
+	ctx  context.Context
 	rpc  *arigo.Client
 	root string
 }
 
-func NewAria2Downloader(address, secret, root string) (Downloader, error) {
+func NewAria2Downloader(ctx context.Context, address, secret, root string) (Downloader, error) {
 	ag, err := arigo.Dial(address, secret)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Aria2Downloader{
+		ctx:  ctx,
 		rpc:  &ag,
 		root: root,
 	}, nil
@@ -67,7 +69,7 @@ func (d *Aria2Downloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 		defer close(progress)
 
 		if m.GetFull() == "" {
-			done <- m.MarkDownloaded(context.TODO())
+			done <- m.MarkDownloaded(d.ctx)
 			return
 		}
 
@@ -86,7 +88,7 @@ func (d *Aria2Downloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 			return
 		}
 
-		done <- m.MarkDownloaded(context.TODO())
+		done <- m.MarkDownloaded(d.ctx)
 	}()
 
 	return progress, done

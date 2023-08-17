@@ -8,13 +8,14 @@ import (
 	"github.com/ofdl/ofdl/ent/media"
 	"github.com/ofdl/ofdl/ent/messagemedia"
 	"github.com/ofdl/ofdl/ent/subscription"
+	"github.com/ofdl/ofdl/ofdl"
 	"github.com/spf13/cobra"
 )
 
 var statsCmd = &cobra.Command{
 	Use:   "stats",
 	Short: "Print database statistics",
-	RunE: Inject(func(ctx context.Context, Ent *ent.Client) error {
+	RunE: ofdl.RunE(func(ctx context.Context, Ent *ent.Client) error {
 		subCount, err := Ent.Subscription.Query().Count(ctx)
 		if err != nil {
 			return err

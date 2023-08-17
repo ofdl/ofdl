@@ -6,6 +6,7 @@ import (
 	"github.com/ofdl/ofdl/ent"
 	"github.com/ofdl/ofdl/ent/media"
 	"github.com/ofdl/ofdl/ent/messagemedia"
+	"github.com/ofdl/ofdl/ofdl"
 	"github.com/ofdl/ofdl/ofdl/downloader"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
@@ -45,7 +46,7 @@ var downloadPostsCmd = &cobra.Command{
 	Use:     "media-posts",
 	Short:   "Download media posts",
 	Aliases: []string{"media", "mp"},
-	RunE: Inject(func(ctx context.Context, Ent *ent.Client, Downloader downloader.Downloader) error {
+	RunE: ofdl.RunE(func(ctx context.Context, Ent *ent.Client, Downloader downloader.Downloader) error {
 		missing, err := Ent.Media.Query().
 			Where(media.DownloadedAtIsNil()).
 			WithPost(func(q *ent.PostQuery) {
@@ -74,7 +75,7 @@ var downloadMessagesCmd = &cobra.Command{
 	Use:     "messages",
 	Short:   "Download messages",
 	Aliases: []string{"msg"},
-	RunE: Inject(func(ctx context.Context, Ent *ent.Client, Downloader downloader.Downloader) error {
+	RunE: ofdl.RunE(func(ctx context.Context, Ent *ent.Client, Downloader downloader.Downloader) error {
 		missing, err := Ent.MessageMedia.Query().
 			Where(messagemedia.DownloadedAtIsNil()).
 			WithMessage(func(q *ent.MessageQuery) {

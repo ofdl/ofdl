@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"context"
-
-	"github.com/defval/di"
 	"github.com/ofdl/ofdl/ofdl"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -44,14 +41,6 @@ A typical ofdl workflow looks like this:
   ofdl stash
 `,
 	Version: Version,
-}
-
-func Inject(runE interface{}) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		ofdl.ProvideValue(cmd)
-		ofdl.ProvideValue(cmd.Context(), di.As(new(context.Context)))
-		return ofdl.Invoke(runE)
-	}
 }
 
 func init() {
