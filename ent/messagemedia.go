@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"path"
@@ -220,9 +221,14 @@ func (m *MessageMedia) URL() string {
 func (m MessageMedia) Directory() string {
 	return fmt.Sprintf("/%s/messages/%d", m.Edges.Message.Edges.Subscription.Username, m.Edges.Message.ID)
 }
+
 func (mm *MessageMedia) Filename() string {
-	u, _ := url.Parse(m.URL())
+	u, _ := url.Parse(mm.URL())
 	return path.Base(u.Path)
+}
+
+func (mm *MessageMedia) MarkDownloaded(ctx context.Context) error {
+	return mm.Update().SetDownloadedAt(time.Now()).Exec(ctx)
 }
 
 // MessageMediaSlice is a parsable slice of MessageMedia.

@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"os"
@@ -57,7 +58,7 @@ func (d *LocalDownloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 		defer close(progress)
 
 		if m.URL() == "" {
-			done <- nil
+			done <- m.MarkDownloaded(context.TODO())
 			return
 		}
 
@@ -88,7 +89,7 @@ func (d *LocalDownloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 			return
 		}
 
-		done <- nil
+		done <- m.MarkDownloaded(context.TODO())
 	}()
 
 	return progress, done

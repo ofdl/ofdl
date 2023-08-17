@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"strings"
@@ -66,7 +67,7 @@ func (d *Aria2Downloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 		defer close(progress)
 
 		if m.URL() == "" {
-			done <- nil
+			done <- m.MarkDownloaded(context.TODO())
 			return
 		}
 
@@ -85,7 +86,7 @@ func (d *Aria2Downloader) DownloadOne(m Downloadable) (<-chan float64, <-chan er
 			return
 		}
 
-		done <- nil
+		done <- m.MarkDownloaded(context.TODO())
 	}()
 
 	return progress, done

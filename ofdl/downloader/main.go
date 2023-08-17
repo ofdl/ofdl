@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/viper"
@@ -10,6 +11,7 @@ type Downloadable interface {
 	Directory() string
 	Filename() string
 	URL() string
+	MarkDownloaded(context.Context) error
 }
 
 type Downloader interface {

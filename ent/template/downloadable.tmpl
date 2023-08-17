@@ -22,9 +22,14 @@
   {{- end }}
 
   {{- if or (eq $.Name "Media") (eq $.Name "MessageMedia") }}
+
     func ({{ $.Receiver }} *{{ $.Name }}) Filename() string {
-      u, _ := url.Parse(m.URL())
+      u, _ := url.Parse({{ $.Receiver }}.URL())
       return path.Base(u.Path)
+    }
+
+    func ({{ $.Receiver }} *{{ $.Name }}) MarkDownloaded(ctx context.Context) error {
+      return {{ $.Receiver }}.Update().SetDownloadedAt(time.Now()).Exec(ctx)
     }
   {{- end }}
 {{ end }}
