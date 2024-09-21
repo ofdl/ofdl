@@ -10,3 +10,4 @@ downloads:
 chromium:
     exec: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
     profile: ~/Library/Application Support/Google/Chrome/Default
+dynamic-rules-url: https://github.com/DIGITALCRIMINALS/dynamic-rules/raw/main/onlyfans.json

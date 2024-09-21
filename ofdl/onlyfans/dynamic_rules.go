@@ -11,7 +11,9 @@ func NewDynamicRules() (*viper.Viper, error) {
 	v := viper.New()
 	v.SetConfigType("json")
 
-	r, err := http.Get("https://github.com/DIGITALCRIMINALS/dynamic-rules/raw/main/onlyfans.json")
+	url := viper.GetString("dynamic-rules-url")
+
+	r, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
