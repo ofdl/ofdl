@@ -69,6 +69,7 @@ func init() {
 
 	viper.SetDefault("database", "ofdl.sqlite")
 	viper.SetDefault("app-token", "33d57ade8c02dbc5a333db99ff9ae26a")
+	viper.SetDefault("dynamic-rules-url", "https://raw.githubusercontent.com/DATAHOARDERS/dynamic-rules/main/onlyfans.json")
 
 	CLI.PersistentFlags().String("database", "", "Path to database file")
 	viper.BindPFlag("database", CLI.PersistentFlags().Lookup("database"))

@@ -48,21 +48,38 @@ func NewOnlyFans() (OnlyFansAPI, error) {
 }
 
 func (o *OnlyFans) sign(r *http.Request) error {
-	// path= fullpath with query
+	// path= fullpath with query, exactly as sent
 	path := r.URL.Path
-	if q := r.URL.Query().Encode(); q != "" {
+	if q := r.URL.RawQuery; q != "" {
 		path += "?" + q
 	}
 
-	// unix timestamp
-	unixtime := time.Now().Unix()
+	// unix timestamp in milliseconds
+	unixtime := time.Now().UnixMilli()
 
-	// msg [static_param, unixtime, path, user-id].join(\n)
-	msg := []string{
+	r.Header.Add("sign", Sign(
 		o.dr.GetString("static_param"),
-		fmt.Sprintf("%d", unixtime),
+		o.dr.GetString("format"),
+		o.dr.GetIntSlice("checksum_indexes"),
+		o.dr.GetInt("checksum_constant"),
+		unixtime,
 		path,
 		viper.GetString("auth.user-id"),
+	))
+	r.Header.Add("time", fmt.Sprintf("%d", unixtime))
+
+	return nil
+}
+
+// Sign builds the sign header for a request path. format has %x placeholders
+// for the SHA-1 hex digest and the checksum, as NewDynamicRules leaves it.
+func Sign(staticParam, format string, checksumIndexes []int, checksumConstant int, unixtime int64, path, userID string) string {
+	// msg [static_param, unixtime, path, user-id].join(\n)
+	msg := []string{
+		staticParam,
+		fmt.Sprintf("%d", unixtime),
+		path,
+		userID,
 	}
 
 	// sha1(msg)
@@ -71,17 +88,13 @@ func (o *OnlyFans) sign(r *http.Request) error {
 	sum := sha.Sum(nil)
 	xum := fmt.Sprintf("%x", sum)
 
-	checksum := o.dr.GetInt("checksum_constant")
-	for _, i := range o.dr.GetIntSlice("checksum_indexes") {
+	checksum := checksumConstant
+	for _, i := range checksumIndexes {
 		checksum += int(xum[i])
 	}
+	if checksum < 0 {
+		checksum = -checksum
+	}
 
-	r.Header.Add("sign", fmt.Sprintf(
-		o.dr.GetString("format"),
-		sum,
-		checksum,
-	))
-	r.Header.Add("time", fmt.Sprintf("%d", unixtime))
-
-	return nil
+	return fmt.Sprintf(format, sum, checksum)
 }

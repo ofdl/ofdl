@@ -34,7 +34,7 @@ $PWD/ofdl.yaml. The following is a comprehensive example configuration file:
   	profile: ~/.config/chromium/Default
   
   # The URL to use for downloading the latest set of dynamic rule
-  dynamic-rules-url: https://github.com/DIGITALCRIMINALS/dynamic-rules/raw/main/onlyfans.json
+  dynamic-rules-url: https://raw.githubusercontent.com/DATAHOARDERS/dynamic-rules/main/onlyfans.json
   
   # Authentication Config
   auth:
