@@ -1,6 +1,9 @@
 package onlyfans
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 func (o *OnlyFans) GetMessages(uid int, id *int) (*PagableList[Message], error) {
 	page := &PagableList[Message]{}
@@ -52,6 +55,23 @@ type MessageMedia struct {
 	Type    string  `json:"type"`
 	CanView bool    `json:"canView"`
 	Src     *string `json:"src"`
+}
+
+func (m *MessageMedia) UnmarshalJSON(b []byte) error {
+	type plain MessageMedia
+	if err := json.Unmarshal(b, (*plain)(m)); err != nil {
+		return err
+	}
+	if m.Src == nil || *m.Src == "" {
+		var f mediaFiles
+		if err := json.Unmarshal(b, &f); err != nil {
+			return err
+		}
+		if u := f.url(); u != "" {
+			m.Src = &u
+		}
+	}
+	return nil
 }
 
 type PagableList[T any] struct {

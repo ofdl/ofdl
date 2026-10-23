@@ -1,6 +1,9 @@
 package onlyfans
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 func (o *OnlyFans) GetMediaPosts(uid int, beforePublishTime *string) (*PaginatedList[MediaPost], error) {
 	page := &PaginatedList[MediaPost]{}
@@ -56,6 +59,41 @@ type Media struct {
 	CreatedAt string `json:"createdAt"`
 	Type      string `json:"type"`
 	Full      string `json:"full"`
+}
+
+// mediaFiles is where the API now puts media URLs; the top-level full and src
+// fields are no longer filled in.
+type mediaFiles struct {
+	Files struct {
+		Full struct {
+			URL string `json:"url"`
+		} `json:"full"`
+	} `json:"files"`
+	Source struct {
+		Source string `json:"source"`
+	} `json:"source"`
+}
+
+func (f mediaFiles) url() string {
+	if f.Files.Full.URL != "" {
+		return f.Files.Full.URL
+	}
+	return f.Source.Source
+}
+
+func (m *Media) UnmarshalJSON(b []byte) error {
+	type plain Media
+	if err := json.Unmarshal(b, (*plain)(m)); err != nil {
+		return err
+	}
+	if m.Full == "" {
+		var f mediaFiles
+		if err := json.Unmarshal(b, &f); err != nil {
+			return err
+		}
+		m.Full = f.url()
+	}
+	return nil
 }
 
 type PaginatedList[T any] struct {
