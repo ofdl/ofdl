@@ -21,7 +21,7 @@ func (o *OnlyFans) GetMessages(uid int, id *int) (*PagableList[Message], error) 
 		return nil, err
 	}
 
-	_, err = o.Do(r, page, nil)
+	err = o.do(r, page)
 	if err != nil {
 		return nil, err
 	}

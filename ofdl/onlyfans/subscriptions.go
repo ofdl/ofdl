@@ -2,7 +2,6 @@ package onlyfans
 
 func (o *OnlyFans) GetSubscriptions(limit, offset int) ([]Subscription, error) {
 	out := []Subscription{}
-	outErr := map[string]interface{}{}
 	r, err := o.New().Get("subscriptions/subscribes").
 		QueryStruct(GetSubscriptionsOptions{
 			Limit:  limit,
@@ -19,7 +18,7 @@ func (o *OnlyFans) GetSubscriptions(limit, offset int) ([]Subscription, error) {
 		return nil, err
 	}
 
-	_, err = o.Do(r, &out, &outErr)
+	err = o.do(r, &out)
 	if err != nil {
 		return nil, err
 	}

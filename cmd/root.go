@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"os"
 
 	"github.com/defval/di"
 	"github.com/ofdl/ofdl/ofdl"
@@ -17,7 +18,10 @@ var (
 func Execute(app *di.Container) {
 	App = app
 
-	CLI.Execute()
+	// cobra has already printed the error
+	if err := CLI.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
 
 func UseOFDL(cmd *cobra.Command, args []string) error {

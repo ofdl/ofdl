@@ -23,7 +23,7 @@ func (o *OnlyFans) GetMediaPosts(uid int, beforePublishTime *string) (*Paginated
 		return nil, err
 	}
 
-	_, err = o.Do(r, page, nil)
+	err = o.do(r, page)
 	if err != nil {
 		return nil, err
 	}

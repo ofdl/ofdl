@@ -85,3 +85,26 @@ func (o *OnlyFans) sign(r *http.Request) error {
 
 	return nil
 }
+
+// do sends a request and decodes a successful response into out. An error
+// response from the API (such as an expired session) is returned as an error
+// instead of leaving out empty.
+func (o *OnlyFans) do(r *http.Request, out interface{}) error {
+	apiErr := struct {
+		Error struct {
+			Code    int    `json:"code"`
+			Message string `json:"message"`
+		} `json:"error"`
+	}{}
+	resp, err := o.Do(r, out, &apiErr)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		if apiErr.Error.Message != "" {
+			return fmt.Errorf("%s %s: %s: %s", r.Method, r.URL.Path, resp.Status, apiErr.Error.Message)
+		}
+		return fmt.Errorf("%s %s: %s", r.Method, r.URL.Path, resp.Status)
+	}
+	return nil
+}

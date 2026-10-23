@@ -2,7 +2,6 @@ package onlyfans
 
 func (o *OnlyFans) Following() (*Following, error) {
 	out := Following{}
-	outErr := map[string]interface{}{}
 	r, err := o.New().Get("lists/following").Request()
 	if err != nil {
 		return nil, err
@@ -12,7 +11,7 @@ func (o *OnlyFans) Following() (*Following, error) {
 		return nil, err
 	}
 
-	_, err = o.Do(r, &out, &outErr)
+	err = o.do(r, &out)
 	if err != nil {
 		return nil, err
 	}
