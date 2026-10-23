@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -72,6 +73,12 @@ func (d *LocalDownloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 			return
 		}
 		defer resp.Body.Close()
+		// An expired or refused CDN link answers with an error page; saving it
+		// would leave a broken file marked as downloaded
+		if resp.StatusCode != http.StatusOK {
+			done <- fmt.Errorf("downloading %s: %s", m.Filename(), resp.Status)
+			return
+		}
 
 		totalSize := resp.ContentLength
 		progressReader := ProgressReader(resp.Body, totalSize, progress)
@@ -89,6 +96,8 @@ func (d *LocalDownloader) DownloadOne(m model.DownloadableMedia) (<-chan float64
 
 		_, err = io.Copy(out, progressReader)
 		if err != nil {
+			out.Close()
+			os.Remove(out.Name())
 			done <- err
 			return
 		}
